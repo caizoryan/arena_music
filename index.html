@@ -3,8 +3,92 @@
 
 <head>
 	<title>Bootleg Are.na Mixtape</title>
-	<link rel="stylesheet" type="text/css" href="./style.css">
+	<!-- <link rel="stylesheet" type="text/css" href="./style.css"> -->
 </head>
+<style>
+	@font-face {
+		font-family: 'Departure';
+		src: url('./fonts/dep.otf') format('opentype');
+	}
+
+	@font-face {
+		font-family: 'Bi';
+		src: url('./fonts/bianzhidai_noBG/OTF/bianzhidai_noBG-Ring.otf') format('opentype');
+	}
+
+	:root {
+		--primary: #000;
+		--secondary: #fff;
+
+		--background: #f0f0f0;
+		--light-background: #fff;
+
+		--text: #000;
+		--accent: #ff0000;
+	}
+
+	* {
+		padding: 0;
+		margin: 0;
+		font-family: 'Departure', monospace;
+	}
+
+	/* grid layout
+* -- title
+* -- list of tracks 
+*/
+	.channel {
+		background-color: var(--light-background);
+		/* margin: 0 auto; */
+		border: 1px solid var(--primary);
+		height: 100vh;
+		width: 100vw;
+
+		display: grid;
+		grid-template-rows: 1fr 9fr;
+	}
+
+	.channel h1 {
+		font-family: 'Bi', monospace;
+		padding: 1em;
+	}
+
+	.list {
+		margin: 1em 2em;
+		background-color: var(--light-background);
+		overflow-y: scroll;
+	}
+
+
+	.block {
+		display: grid;
+		grid-template-columns: .5fr 8fr 1fr 1fr;
+		grid-gap: 3em;
+		margin: .5em auto;
+		padding: 1.5em;
+		border-top: 1px solid var(--primary);
+		width: 95%;
+	}
+
+	.block img {
+		width: 100px;
+		width: 100%;
+	}
+
+	.block button {
+		all: unset;
+
+		cursor: pointer;
+		display: flex;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.block button:hover {
+		background-color: var(--accent);
+		color: var(--light-background);
+	}
+</style>
 
 <body>
 	<div id="mother"></div>
