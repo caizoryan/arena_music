@@ -47,7 +47,14 @@ function pausePlayer(url) {
 	reactplayer(container, { url, playing: false })
 }
 function playPlayer(url) {
-	reactplayer(container, { url, playing: true, onStart: () => console.log('started') })
+	reactplayer(container,
+		{
+			url,
+			playing: true,
+			onStart: () => console.log('started'),
+			onProgress: (l) => console.log('progress', l),
+			onDuration: (l) => console.log('duration', l)
+		})
 }
 
 
