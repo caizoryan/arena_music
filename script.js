@@ -8,8 +8,7 @@ import page from './page.js';
 // ------------------------
 
 const init = () => {
-	page("/");
-	page("/:slug", (ctx) => { console.log(ctx) });
+	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
 	page({ hashbang: true });
 };
 
@@ -92,8 +91,8 @@ const Channel = () => html`
 		h1 -- ${channel_title}
 		.list
 			each of ${_ => channel.contents} as ${Block}
-	button [onclick=${() => channel_slug.set("fish-radio")}] -- Fish Radio
-	button [onclick=${() => channel_slug.set("mixtape-mama")}] -- Mixtape Mama
+	button [onclick=${() => page("/fish-radio")}] -- Fish Radio
+	button [onclick=${() => page("/mixtape-mama")}] -- Mixtape Mama
 	`
 
 function pausePlayer(url) {
@@ -112,6 +111,6 @@ function playPlayer(url, onStart, onProgress, onDuration) {
 
 render(Channel, document.querySelector('#mother'))
 
-// window.onload = () => {
-// 	init();
-// }
+window.onload = () => {
+	init();
+}
