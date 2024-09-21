@@ -1,6 +1,6 @@
 import { render, html, mut, sig, mem, eff_on } from './solid_monke/solid_monke.js'
 import { tinyApi } from './arena.js'
-import reactplayer from "./reactplayer.js"
+import player from "./player.js"
 import page from './page.js';
 
 // ------------------------
@@ -96,10 +96,10 @@ const Channel = () => html`
 	`
 
 function pausePlayer(url) {
-	reactplayer(container, { url, playing: false })
+	player(container, { url, playing: false })
 }
 function playPlayer(url, onStart, onProgress, onDuration) {
-	reactplayer(container,
+	player(container,
 		{
 			url,
 			playing: true,
