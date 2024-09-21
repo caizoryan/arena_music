@@ -25,7 +25,7 @@ let channel = mut({ contents: [] })
 eff_on(channel_slug,
 	() => tinyApi.get_channel(channel_slug()).then((res) => {
 		channel_title.set(res.title)
-		channel.contents = res.contents
+		channel.contents = res.contents.filter((block) => block.class === "Media" || block.class === "Attachment")
 	})
 )
 
@@ -40,13 +40,30 @@ const find_next = (id) => {
 	return channel.contents[index + 1]
 }
 
+function getURL(item) {
+	switch (item.class) {
+		case 'Attachment':
+			return item.attachment.url
+		case 'Media':
+			return item.source.url
+		default:
+			return false
+	}
+}
 
+//
 // ------------------------
 // View
 // ------------------------
 
+const Unplayable = () => html`
+	.block
+		.metadata
+			span -- Unplayable`
+
 const Block = (block) => {
-	let url = block?.source?.url
+	let url = getURL(block)
+	if (!url) return Unplayable
 	let d = "-"
 	let duration = sig(d)
 	let current = sig(d)
@@ -64,7 +81,7 @@ const Block = (block) => {
 		let totalSeconds = t
 		let minutes = Math.floor(totalSeconds / 60);
 		let seconds = totalSeconds % 60;
-		duration.set("[" + minutes + ":" + seconds + "]")
+		duration.set("[" + minutes.toFixed(0) + ":" + seconds.toFixed(0) + "]")
 	}
 
 	let onstart = () => {
@@ -74,8 +91,14 @@ const Block = (block) => {
 
 	let onended = () => {
 		playing.set(false)
-		let find = find_next(block.id)
-		find.handle_play()
+		find_next_and_play(block.id)
+	}
+
+	let find_next_and_play = (id) => {
+		let find = find_next(id)
+		if (!find.handle_play) {
+			find_next_and_play(find.id)
+		} else { find.handle_play() }
 	}
 
 	let loading = sig(false)
@@ -119,6 +142,7 @@ const Channel = () => html`
 function pausePlayer(url) {
 	player(container, { url, playing: false })
 }
+
 function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
 	player(container,
 		{
