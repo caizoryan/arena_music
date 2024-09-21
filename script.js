@@ -61,6 +61,30 @@ const Unplayable = () => html`
 		.metadata
 			span -- Unplayable`
 
+let find_previous = (id) => {
+	// find the index of the current block
+	let index = channel.contents.findIndex((block) => block.id === id)
+
+	// if the current block is not found, return the first block
+	if (index === -1) return channel.contents[0]
+	if (index === 0) return channel.contents[channel.contents.length - 1]
+
+	return channel.contents[index - 1]
+}
+
+let find_previous_and_play = (id) => {
+	let find = find_previous(id)
+	if (!find.handle_play) {
+		find_previous_and_play(find.id)
+	} else { find.handle_play() }
+}
+
+let find_next_and_play = (id) => {
+	let find = find_next(id)
+	if (!find.handle_play) {
+		find_next_and_play(find.id)
+	} else { find.handle_play() }
+}
 const Block = (block) => {
 	let url = getURL(block)
 	if (!url) return Unplayable
@@ -94,12 +118,6 @@ const Block = (block) => {
 		find_next_and_play(block.id)
 	}
 
-	let find_next_and_play = (id) => {
-		let find = find_next(id)
-		if (!find.handle_play) {
-			find_next_and_play(find.id)
-		} else { find.handle_play() }
-	}
 
 	let loading = sig(false)
 	let isLoading = mem(() => loading() === true)
@@ -107,6 +125,11 @@ const Block = (block) => {
 
 	let handle_play = () => {
 		if (current() === d) loading.set(true)
+		// set all other blocks to not playing
+		channel.contents.forEach((block) => {
+			if (block.handle_pause) block.handle_pause()
+		})
+
 		playPlayer(url, onstart, onprogress, onduration, onended)
 	}
 
@@ -117,6 +140,9 @@ const Block = (block) => {
 
 	block.handle_play = handle_play
 	block.handle_pause = handle_pause
+	block.playing = playing
+	block.duration = duration
+	block.current = current
 
 	return html`
 	.block
@@ -130,13 +156,35 @@ const Block = (block) => {
 	`
 }
 
+const Player = () => {
+	let playing = mem(() => channel.contents.find((block) => { if (block?.playing) return block.playing() === true }))
+	let title = mem(() => playing()?.title)
+	let current = mem(() => playing()?.current)
+	let duration = mem(() => playing()?.duration)
+
+	let handle_pause = () => playing()?.handle_pause()
+	let handle_play = () => playing() ? playing().handle_play() : (channel.contents[0].handle_play())
+	let handle_next = () => find_next_and_play(playing().id)
+	let handle_previous = () => find_previous_and_play(playing().id)
+
+	return html`
+			.controls
+					button [onclick=${handle_previous}] -- Prev
+					button [onclick=${handle_pause}] -- Pause
+					button [onclick=${handle_play}] -- Play
+					button [onclick=${handle_next}] -- Next
+			.meta
+				.song-title -- ${title}
+				.time -- ${current} / ${duration}
+	`
+}
 const Channel = () => html`
 	.channel
-		h1 -- ${channel_title}
+		.header
+			.title -- ${channel_title}
+			.player -- ${Player}
 		.list
 			each of ${_ => channel.contents} as ${Block}
-	button [onclick=${() => page("/fish-radio")}] -- Fish Radio
-	button [onclick=${() => page("/mixtape-mama")}] -- Mixtape Mama
 	`
 
 function pausePlayer(url) {

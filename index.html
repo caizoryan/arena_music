@@ -33,10 +33,6 @@
 		font-family: 'Departure', monospace;
 	}
 
-	/* grid layout
-* -- title
-* -- list of tracks 
-*/
 	.channel {
 		background-color: var(--light-background);
 		/* margin: 0 auto; */
@@ -48,10 +44,6 @@
 		grid-template-rows: 1fr 9fr;
 	}
 
-	.channel h1 {
-		font-family: 'Bi', monospace;
-		padding: 1em;
-	}
 
 	.list {
 		margin: 1em 2em;
@@ -64,10 +56,9 @@
 		display: grid;
 		grid-template-columns: .5fr 8fr 1fr 1fr;
 		grid-gap: 3em;
-		margin: .5em auto;
+		margin: .5em 0;
 		padding: 1.5em;
 		border-top: 1px solid var(--primary);
-		width: 95%;
 	}
 
 	.block img {
@@ -75,18 +66,54 @@
 		width: 100%;
 	}
 
-	.block button {
+	button {
 		all: unset;
 
 		cursor: pointer;
-		display: flex;
-		justify-content: center;
+		margin: .5em;
+		display: inline-flex;
 		align-items: center;
+		justify-content: center;
+		background-color: var(--background);
 	}
 
-	.block button:hover {
-		background-color: var(--accent);
+	button:hover {
+		background-color: var(--primary);
 		color: var(--light-background);
+	}
+
+	.header {
+		display: grid;
+		grid-row-columns: 1fr 1fr;
+		margin: 2em;
+	}
+
+	.header .title {
+		font-family: 'Bi', monospace;
+		font-size: 2em;
+		padding: 1em;
+	}
+
+	.player {
+		/* margin: 2em; */
+		padding: 1em;
+		display: grid;
+		border: 1px solid var(--primary);
+
+		grid-template-columns: 1fr 4fr;
+	}
+
+	.player .controls {
+		border-right: 1px solid var(--primary);
+	}
+
+	.player .meta {
+		display: flex;
+		padding-left: 1em;
+	}
+
+	.player .song-title {
+		margin-right: 4em;
 	}
 </style>
 
