@@ -29,6 +29,18 @@ eff_on(channel_slug,
 	})
 )
 
+const find_next = (id) => {
+	// find the index of the current block
+	let index = channel.contents.findIndex((block) => block.id === id)
+
+	// if the current block is not found, return the first block
+	if (index === -1) return channel.contents[0]
+	if (index === channel.contents.length - 1) return channel.contents[0]
+
+	return channel.contents[index + 1]
+}
+
+
 // ------------------------
 // View
 // ------------------------
@@ -60,19 +72,28 @@ const Block = (block) => {
 		playing.set(true)
 	}
 
+	let onended = () => {
+		playing.set(false)
+		let find = find_next(block.id)
+		find.handle_play()
+	}
+
 	let loading = sig(false)
 	let isLoading = mem(() => loading() === true)
 	let notLoading = mem(() => loading() === false)
 
 	let handle_play = () => {
 		if (current() === d) loading.set(true)
-		playPlayer(url, onstart, onprogress, onduration)
+		playPlayer(url, onstart, onprogress, onduration, onended)
 	}
 
 	let handle_pause = () => {
 		playing.set(false)
 		pausePlayer()
 	}
+
+	block.handle_play = handle_play
+	block.handle_pause = handle_pause
 
 	return html`
 	.block
@@ -98,14 +119,15 @@ const Channel = () => html`
 function pausePlayer(url) {
 	player(container, { url, playing: false })
 }
-function playPlayer(url, onStart, onProgress, onDuration) {
+function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
 	player(container,
 		{
 			url,
 			playing: true,
 			onStart: onStart,
 			onProgress: onProgress,
-			onDuration: onDuration
+			onDuration: onDuration,
+			onEnded: onEnded
 		})
 }
 
