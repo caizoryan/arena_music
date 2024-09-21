@@ -113,4 +113,5 @@ render(Channel, document.querySelector('#mother'))
 
 window.onload = () => {
 	init();
+	page("/" + channel_slug())
 }
