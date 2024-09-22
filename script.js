@@ -36,7 +36,9 @@ const init = () => {
 // ------------------------
 const Config = {
 	auto_refresh: true,
-	auto_refresh_at: .95
+	auto_refresh_at: .95,
+	default_property: "____",
+	default_value: "____"
 }
 
 // Icons
@@ -74,13 +76,33 @@ let css = mut({
 })
 
 function save_css() {
-	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet))
+	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet, null, 2))
 }
 
-function load_css() {
-	let saved = localStorage.getItem(channel_slug())
-	if (saved) {
-		css.StyleSheet = JSON.parse(saved)
+function copy_css() {
+	let cssString = JSON.stringify(css.StyleSheet, null, 2)
+	navigator.clipboard.writeText(cssString)
+}
+
+function safe_json_parse(str) {
+	try {
+		return JSON.parse(str)
+	} catch (e) {
+		return false
+	}
+}
+
+function load_css(str) {
+	if (str) {
+		try {
+			str = safe_json_parse(str)
+			if (str) {
+				css.StyleSheet = str
+			}
+		}
+		catch (e) {
+			console.log(e)
+		}
 	}
 }
 
@@ -88,17 +110,21 @@ let css_string = mem(() => {
 	let c = css.StyleSheet
 	let cssString = ""
 	Object.entries(c).forEach(([selector, rules]) => {
-		cssString += selector + " {"
+		cssString += selector + " {" + `\n`
 		Object.entries(rules).forEach(([key, value]) => {
-			cssString += key + ":" + value + ";"
+			cssString += `\t` + key + ":" + value + ";" + `\n`
 		})
-		cssString += "}"
+		cssString += "}" + `\n\n`
 	})
 	return cssString
 })
 
 function edit_css_selector(selector, new_selector) {
 	if (selector === new_selector) return
+	if (new_selector === "") {
+		delete css.StyleSheet[selector]
+		return
+	}
 	let rules = css.StyleSheet[selector]
 	css.StyleSheet[new_selector] = rules
 	delete css.StyleSheet[selector]
@@ -135,11 +161,22 @@ function add_css_rule(selector, key, value) {
 
 // Dependent data
 let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
+let css_block = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "style.css" && block.class === "Text"))
+
 let cover_image = mem(() => cover()?.image?.display.url)
 
 // -----------
 // Effects
 // -----------
+eff_on(css_block, () => {
+	if (!css_block()) return
+	let content = css_block()?.content
+	if (!content) return
+	let parsed = safe_json_parse(content)
+	if (!parsed) return
+	css.StyleSheet = parsed
+})
+
 eff_on(contents_raw, () => {
 	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
 	channel.contents = filtered
@@ -462,7 +499,7 @@ const CssItem = ([selector, rules]) => {
 		let onkeydownValue = (e) => {
 			if (e.key === "Enter") {
 				saveValueAndToggle(e)
-				add_css_rule(selector, "--- ", " ---")
+				add_css_rule(selector, Config.default_property, Config.default_value)
 			}
 		}
 
@@ -509,7 +546,7 @@ const CssItem = ([selector, rules]) => {
 	input [value=${selector}
 		id=${"selector-input-" + selector}
 		onkeydown=${onkeydown}
-		]`
+	]`
 
 	let selectorHoverIn = () => {
 		let items = document.querySelectorAll(selector)
@@ -537,7 +574,9 @@ const CssItem = ([selector, rules]) => {
 			onmouseleave=${selectorHoverOut}
 		] -- ${selector} `
 
-	let handle_add_rule = () => add_css_rule(selector, "--- ", " ---")
+	let handle_add_rule = () => add_css_rule(selector, Config.default_property, Config.default_value)
+
+
 
 	let rulesIter = mem(() => Object.entries(rules))
 
@@ -577,6 +616,7 @@ const Editor = () => {
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
 			button.save-css [onclick=${save_css}] -- Save CSS
+			button.save-css [onclick=${copy_css}] -- Copy CSS
 			br
 			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
 			.css-item-container
@@ -639,7 +679,9 @@ setTimeout(() => {
 
 window.onload = () => {
 	init();
-	load_css()
+
+	let str = localStorage.getItem(channel_slug())
+	load_css(str)
 
 	document.body.addEventListener("keydown", (e) => {
 		if (e.key === "Shift") {

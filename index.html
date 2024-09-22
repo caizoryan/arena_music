@@ -6,6 +6,8 @@
 	<!-- <link rel="stylesheet" type="text/css" href="./style.css"> -->
 </head>
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
 	@font-face {
 		font-family: 'Departure';
 		src: url('./fonts/dep.otf') format('opentype');
@@ -57,6 +59,7 @@
 		padding: 0;
 		margin: 0;
 		font-family: 'Departure', monospace;
+		font-optical-sizing: auto;
 		transition: all .3s;
 		color: var(--text);
 	}
@@ -197,6 +200,8 @@
 		width: 50vw;
 		height: 90vh;
 		background-color: var(--medium-background);
+
+		font-family: "Roboto Mono", 'Departure', monospace;
 	}
 
 	.css-item-container {
@@ -212,6 +217,11 @@
 		width: 95%;
 		text-overflow: ellipsis;
 		overflow: hidden;
+	}
+
+	.css-item p,
+	.css-item span {
+		font-family: "Roboto Mono", monospace;
 	}
 
 	.selector-item {
@@ -261,6 +271,6 @@
 	<div style="display: none;" id="container"></div>
 </body>
 
-<script type='module' src="./script.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+<script type='module' src="./script.js"></script>
 
 </html>
