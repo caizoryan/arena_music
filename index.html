@@ -17,14 +17,19 @@
 	}
 
 	:root {
-		--primary: #000;
-		--secondary: #fff;
+		--primary: #fff;
+		--secondary: #111;
 
-		--background: #f0f0f0;
-		--light-background: #fff;
+		--light-primary: #aaaaaa66;
 
-		--text: #000;
+		--background: #111;
+		--light-background: #111;
+
+		--text: #fff;
 		--accent: #ff0000;
+
+		--main-border: 1px solid var(--light-primary);
+		--dotted-border: 1px dotted var(--primary);
 	}
 
 	* {
@@ -32,10 +37,15 @@
 		margin: 0;
 		font-family: 'Departure', monospace;
 		transition: all .3s;
+		color: var(--text);
+	}
+
+	body {
+		background-color: var(--background);
 	}
 
 	.channel {
-		background-color: var(--light-background);
+		background-color: var(--background);
 		/* margin: 0 auto; */
 		height: 90vh;
 		width: 100vw;
@@ -46,14 +56,12 @@
 
 
 	.list {
-		margin: 1em 2em;
-		background-color: var(--light-background);
+		margin: 1em 1em;
+		background-color: var(--background);
 		overflow-y: scroll;
+		border: var(--main-border);
 	}
 
-	.list> :nth-last-child(1) {
-		border-bottom: 1px solid var(--primary);
-	}
 
 	span.playing {
 		background-color: var(--primary);
@@ -66,8 +74,10 @@
 		grid-gap: 3em;
 		margin: 0 1.5em;
 		padding: 1.5em;
-		border-top: 1px solid var(--primary);
+		border-bottom: var(--dotted-border);
 	}
+
+	.list> :nth-last-child(1) {}
 
 	.block:hover {
 		cursor: pointer;
@@ -97,7 +107,9 @@
 	}
 
 	.header {
-		margin: 2em;
+		margin: 1rem 1rem .2rem 1rem;
+		padding: 1rem;
+		border: var(--main-border);
 	}
 
 	.header .title {
@@ -112,10 +124,10 @@
 		left: 1em;
 		padding: 1em;
 		display: grid;
-		border: 1px solid var(--primary);
+		border: var(--main-border);
 		width: calc(100vw - 4em);
 		height: (10vh - 5em);
-		background-color: var(--light-background);
+		background-color: var(--background);
 
 		overflow: hidden;
 
@@ -127,7 +139,7 @@
 	}
 
 	.player .controls {
-		border-right: 1px solid var(--primary);
+		border-right: var(--main-border);
 	}
 
 	.player .meta {
