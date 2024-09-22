@@ -57,8 +57,6 @@ function converAstToHyperscript(ast) {
             let children = element.children.find((child) => child.tag === "children" || child.tag === "as");
             if (of && children && (of === null || of === void 0 ? void 0 : of.value) && (children === null || children === void 0 ? void 0 : children.value)) {
                 let e = () => each(of.value, children.value);
-                console.log("pushed each");
-                console.log(of.value, children.value);
                 ret.push(e);
             }
             else {
@@ -67,7 +65,6 @@ function converAstToHyperscript(ast) {
                 if (!f || !c)
                     throw new Error("Invalid each block");
                 let e = () => each(f.value, c.value);
-                console.log("pushed each");
                 ret.push(e);
             }
         }
@@ -77,7 +74,6 @@ function converAstToHyperscript(ast) {
             if (!w || !t)
                 throw new Error("Invalid when block");
             let e = () => if_then({ if: w.value, then: t.value });
-            console.log("pushed when");
             ret.push(e);
         }
         else {
@@ -342,7 +338,6 @@ class Parser {
                 }
             }
         }
-        console.log("ret", ret);
         return ret;
     }
     makeExpressionElement(value) {

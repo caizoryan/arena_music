@@ -89,6 +89,7 @@ let find_next_and_play = (id) => {
 const Block = (block) => {
 	let url = getURL(block)
 	if (!url) return Unplayable
+
 	let d = "-"
 	let duration = sig(d)
 	let current = sig(d)
@@ -171,13 +172,8 @@ const Block = (block) => {
 }
 
 const loaderString = (percent, len = 10) => {
-	console.log("percent", percent)
-	console.log("len", len)
-	console.log("normalized", percent * len)
 	let percentOutOfLen = (percent * len)
-	console.log(percentOutOfLen)
 	let empty = "-"
-	// let full = "x█"
 	let full = "█"
 
 	let cap = Math.floor(percentOutOfLen) + 1
@@ -219,15 +215,15 @@ const Player = () => {
 	return html`
 		.player 
 			.controls 
-					button [onclick=${handle_previous}] -- (<<)
+					button [onclick=${handle_previous}] -- <<
 
 					when ${isPlaying} 
-					then ${html`button [onclick=${handle_pause}] -- (pause)`}
+					then ${html`button [onclick=${handle_pause}] -- [pause]`}
 
 					when ${isNotPlaying}
-					then ${html`button [onclick=${handle_play}] -- (▶)`}
+					then ${html`button [onclick=${handle_play}] -- [  ▶  ]`}
 
-					button [onclick=${handle_next}] -- (>>) 
+					button [onclick=${handle_next}] -- >> 
 			.meta [style=${hideStyle}]
 				.song-title -- ${title}
 				.duration -- ${current} ${mem(() => loaderString(percent(), 50))} ${duration}

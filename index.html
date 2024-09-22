@@ -29,7 +29,7 @@
 		--accent: #ff0000;
 
 		--main-border: 1px solid var(--light-primary);
-		--dotted-border: 1px dotted var(--primary);
+		--dotted-border: 1px dotted var(--light-primary);
 	}
 
 	* {
@@ -81,8 +81,11 @@
 
 	.block:hover {
 		cursor: pointer;
-		background-color: var(--background);
-		box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+	}
+
+	.block:hover .title {
+		background-color: var(--text);
+		color: var(--background);
 	}
 
 	.block img {
@@ -140,6 +143,10 @@
 
 	.player .controls {
 		border-right: var(--main-border);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+
 	}
 
 	.player .meta {
@@ -158,6 +165,7 @@
 	<div id="mother"></div>
 	<div style="display: none;" id="container"></div>
 </body>
-<script type='module' src="./script.js"></script>
+
+<script type='module' src="./script.js" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
 
 </html>
