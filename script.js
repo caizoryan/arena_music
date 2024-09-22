@@ -429,6 +429,7 @@ const CssItem = ([selector, rules]) => {
 
 		let valueInputId = "selector-input-" + selector + "-value-" + key
 		let editValueToggle = () => {
+			console.log("editValueToggle")
 			editValue.set(!editValue())
 			if (editValue()) setTimeout(() => {
 				let el = document.getElementById(valueInputId)
@@ -445,6 +446,7 @@ const CssItem = ([selector, rules]) => {
 			edit_css_rule(selector, e.target.value, value, key)
 			editKeyToggle()
 		}
+
 		let onkeydownKey = (e) => {
 			if (e.key === "Enter") {
 				saveKeyAndToggle(e)
@@ -456,6 +458,7 @@ const CssItem = ([selector, rules]) => {
 			edit_css_rule(selector, key, e.target.value)
 			editValueToggle()
 		}
+
 		let onkeydownValue = (e) => {
 			if (e.key === "Enter") {
 				saveValueAndToggle(e)
@@ -466,7 +469,7 @@ const CssItem = ([selector, rules]) => {
 		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
 		let keyDisplay = html`span [onclick=${editKeyToggle}] -- ${key}`
 
-		let valueInput = html`input [id=${valueInputId} value=${value} onkeydown=${onkeydownValue} focusout=${editValueToggle}]`
+		let valueInput = html`input [id=${valueInputId} value=${value} onkeydown=${onkeydownValue} ]`
 		let valueDisplay = html`span [onclick=${editValueToggle}] -- ${value}`
 
 		return html`
@@ -509,8 +512,16 @@ const CssItem = ([selector, rules]) => {
 		]`
 
 	let selectorHoverIn = () => {
-		document.querySelectorAll(selector).forEach((el) => {
+		let items = document.querySelectorAll(selector)
+		items.forEach((el) => {
 			el.style.border = "1px solid red"
+			if (items.length === 1) {
+				console.log("scrolling")
+				document.querySelector(".list").scrollTo({
+					top: el.offsetTop,
+					behavior: 'smooth'
+				})
+			}
 		})
 	}
 
@@ -566,8 +577,11 @@ const Editor = () => {
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
 			button.save-css [onclick=${save_css}] -- Save CSS
+			br
+			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
 			.css-item-container
 				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
+			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
 			.show-selectors
 				div	
 					p -- Selected Classes
