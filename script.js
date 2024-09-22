@@ -19,14 +19,23 @@ let channel_slug = sig("")
 let channel_title = sig("")
 
 // data
+let contents_raw = sig([])
+
+
 let channel = mut({ contents: [] })
+let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
+let cover_image = mem(() => cover()?.image?.display.url)
+
+eff_on(contents_raw, () =>
+	channel.contents = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+)
 
 // init
 eff_on(channel_slug,
 	() => tinyApi.get_channel(channel_slug()).then((res) => {
 		if (!res || !res.title || !res.contents) return
 		channel_title.set(res.title)
-		channel.contents = res.contents.filter((block) => block.class === "Media" || block.class === "Attachment")
+		contents_raw.set(res.contents)
 	})
 )
 
@@ -90,6 +99,11 @@ const Block = (block) => {
 	let url = getURL(block)
 	if (!url) return Unplayable
 
+	let image = block?.image?.thumb.url
+	if (!image) {
+		image = cover_image()
+	}
+
 	let d = "-"
 	let duration = sig(d)
 	let current = sig(d)
@@ -106,8 +120,9 @@ const Block = (block) => {
 		percentDone.set(t.playedSeconds / durationRaw())
 
 		let minutes = Math.floor(totalSeconds / 60);
-		let seconds = totalSeconds % 60;
+		if (minutes < 10) minutes = "0" + minutes
 
+		let seconds = totalSeconds % 60;
 		if (seconds < 10) seconds = "0" + seconds
 
 		current.set("[" + minutes + ":" + seconds + "]")
@@ -161,9 +176,10 @@ const Block = (block) => {
 	block.current = current
 	block.percentDone = percentDone
 
+
 	return html`
 	.block [onclick=${handle_toggle}]
-		img [src=${block?.image?.thumb.url}]
+		img [src=${image}]
 		.metadata
 			when ${isLoading} then ${() => html`span -- Loading...`}
 			when ${playing} then ${() => html`span.playing -- (▶)`}
@@ -264,6 +280,4 @@ setTimeout(() => {
 
 window.onload = () => {
 	init();
-	// if(channel_slug() === "") channel_slug.set(default_channel)
-	// page()
 }
