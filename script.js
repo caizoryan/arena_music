@@ -93,7 +93,11 @@ function edit_css_selector(selector, new_selector) {
 	delete css.StyleSheet[selector]
 }
 
-function edit_css_rule(selector, key, value) {
+function edit_css_rule(selector, key, value, old_key) {
+	if (old_key !== key) {
+		delete css.StyleSheet[selector][old_key]
+	}
+
 	let rules = css.StyleSheet[selector]
 	if (!rules) return
 
@@ -402,7 +406,7 @@ const CssItem = ([selector, rules]) => {
 			if (editKey()) setTimeout(() => {
 				let el = document.getElementById(keyInputId)
 				el?.focus()
-				el?.addEventListener("focusout", () => editKeyToggle())
+				el?.addEventListener("focusout", saveKeyAndToggle)
 			}, 50)
 		}
 
@@ -413,7 +417,7 @@ const CssItem = ([selector, rules]) => {
 			if (editValue()) setTimeout(() => {
 				let el = document.getElementById(valueInputId)
 				el?.focus()
-				el?.addEventListener("focusout", () => editValueToggle())
+				el?.addEventListener("focusout", saveValueAndToggle)
 			}, 50)
 		}
 		let editValue = sig(false)
@@ -421,18 +425,20 @@ const CssItem = ([selector, rules]) => {
 		let editingValue = mem(() => editValue())
 		let notEditingValue = mem(() => !editingValue())
 
+		let saveKeyAndToggle = (e) => {
+			edit_css_rule(selector, e.target.value, value, key)
+			editKeyToggle()
+		}
 		let onkeydownKey = (e) => {
-			if (e.key === "Enter") {
-				edit_css_rule(selector, e.target.value, value)
-				editKeyToggle()
-			}
+			if (e.key === "Enter") saveKeyAndToggle(e)
 		}
 
+		let saveValueAndToggle = (e) => {
+			edit_css_rule(selector, key, e.target.value)
+			editValueToggle()
+		}
 		let onkeydownValue = (e) => {
-			if (e.key === "Enter") {
-				edit_css_rule(selector, key, e.target.value)
-				editValueToggle()
-			}
+			if (e.key === "Enter") saveValueAndToggle(e)
 		}
 
 		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
@@ -482,11 +488,12 @@ const CssItem = ([selector, rules]) => {
 
 	let selectorDisplay = html`span [onclick=${editSelectorToggle} ] -- ${selector} `
 
-	let handle_add_rule = () => add_css_rule(selector, "property", "value")
+	let handle_add_rule = () => add_css_rule(selector, "--- ", " ---")
 
 	let rulesIter = mem(() => Object.entries(rules))
 
 	return html`
+	.css-item
 		p 
 		 when ${editingSelector} then ${selectorInput}
 		 when ${notEditingSelector} then ${selectorDisplay}
@@ -520,7 +527,8 @@ const Editor = () => {
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
-			each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
+			.css-item-container
+				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
 			.show-selectors
 				div	
 					p -- Selected Classes
@@ -565,8 +573,7 @@ setTimeout(() => {
 
 	let hoverOut = (e) => {
 		if (debug()) {
-			e.target.style.cursor = "default"
-			e.target.style.border = "none"
+			e.target.style = ""
 		}
 	}
 

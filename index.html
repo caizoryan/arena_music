@@ -33,11 +33,13 @@
 		/* -------------------- */
 
 		--primary: #fff;
-		--secondary: #0000ee;
+		--secondary: #111;
 
 		--light-primary: #aaaaaa;
+		--medium-primary: #666;
 
 		--light-background: #333;
+		--medium-background: #222;
 
 		/* -------------------- */
 		/* ---- Dependent ----*/
@@ -194,7 +196,18 @@
 
 		width: 50vw;
 		height: 90vh;
-		background-color: red;
+		background-color: var(--medium-background);
+	}
+
+	.css-item-container {
+		height: 65%;
+		overflow-y: scroll;
+	}
+
+	.css-item {
+		padding: .5em;
+		background-color: var(--light-background);
+		margin-bottom: 1em;
 	}
 
 	.editor[activated="true"] {
