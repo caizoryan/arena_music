@@ -17,16 +17,35 @@
 	}
 
 	:root {
+
+		/* -------------------- */
+		/* ---- Light MODE ----*/
+		/* -------------------- */
+		--primary: #111;
+		--secondary: #eee;
+
+		--light-primary: #444;
+
+		--light-background: #aaa;
+
+		/* -------------------- */
+		/* ---- DARK MODE ----*/
+		/* -------------------- */
+
 		--primary: #fff;
 		--secondary: #111;
 
-		--light-primary: #aaaaaa66;
+		--light-primary: #aaaaaa;
 
-		--background: #111;
-		--light-background: #111;
+		--light-background: #333;
 
-		--text: #fff;
-		--accent: #ff0000;
+		/* -------------------- */
+		/* ---- Dependent ----*/
+		/* -------------------- */
+
+		--background: var(--secondary);
+
+		--text: var(--primary);
 
 		--main-border: 1px solid var(--light-primary);
 		--dotted-border: 1px dotted var(--light-primary);
