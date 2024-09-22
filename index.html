@@ -200,6 +200,32 @@
 	.editor[activated="true"] {
 		right: 1em;
 	}
+
+	.show-selectors {
+		position: absolute;
+		bottom: 1em;
+		left: 1em;
+		height: 20%;
+		display: grid;
+		grid-gap: 1em;
+		grid-template-rows: 1fr 1fr;
+	}
+
+	.show-selectors p {
+		margin-bottom: 1em;
+	}
+
+	.rounded {
+		padding: .5em;
+		background-color: var(--light-primary);
+		border-radius: 1em;
+		margin-right: 1em;
+	}
+
+	#debug-selected {
+		border: 2px solid red;
+		cursor: crosshair;
+	}
 </style>
 
 <body>

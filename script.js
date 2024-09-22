@@ -67,6 +67,20 @@ let selected_ids = sig([])
 let contents_raw = sig([])
 let channel = mut({ contents: [] })
 
+let css = mut({
+	StyleSheet: {
+		".block": {
+			"color": "white",
+		}
+	}
+})
+
+function create_css_selector(selector) {
+	let exists = css.StyleSheet[selector]
+	if (exists) return
+	css.StyleSheet[selector] = {}
+}
+
 // Dependent data
 let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
 let cover_image = mem(() => cover()?.image?.display.url)
@@ -279,7 +293,11 @@ const Block = (block) => {
 
 
 	return html`
-	.block.test [onclick=${handle_toggle} id=${"block-" + block.id}]
+	div [
+			onclick=${handle_toggle}
+			class = ${"block " + block.class}
+			id = ${"block-" + block.id}]
+
 		img.thumb-image [src=${image}]
 		.metadata
 			when ${isLoading} then ${() => html`span -- Loading...`}
@@ -338,21 +356,53 @@ const Player = () => {
 	`
 }
 
+const CssItem = ([selector, rules]) => {
+	let key_value = ([key, value]) => html`
+			p 
+			span [style=opacity:0] -- _  
+			span -- ${key} : ${value}
+		`
+	return html`
+		p -- ${selector} {
+		each of ${Object.entries(rules)} as ${key_value}
+		p -- }
+`
+}
+
 const Editor = () => {
-	let open = sig(false)
+	let open = sig(true)
 	let openEditor = () => open.set(true)
 	let closeEditor = () => open.set(false)
+
+	let copyClipboard = (text) => navigator.clipboard.writeText(text)
+
+	let classItem = (item) => {
+		if (item === "") return
+		let government_name = "." + item
+		let c = () => copyClipboard(government_name)
+		return html`span.rounded [onclick=${c}] -- ${government_name}`
+	}
+
+	let idItem = (item) => {
+		if (item === "") return
+		let government_name = "#" + item
+		let c = () => copyClipboard(government_name)
+		return html`span.rounded [onclick=${c}] -- ${government_name}`
+	}
 
 	return html`
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
-			div.show-selectors
-				p -- Selected Classes
-				p -- ${selected_classes}
+			each of ${Object.entries(css.StyleSheet)} as ${CssItem}
+			.show-selectors
+				div	
+					p -- Selected Classes
+					each of ${selected_classes} as ${classItem}
 
-				p -- Selected IDs
-				p -- ${selected_ids}
+				div	
+					p -- Selected IDs
+					each of ${selected_ids} as ${idItem}
 				
 		`
 
@@ -381,14 +431,15 @@ setTimeout(() => {
 		if (debug()) {
 			console.log(e.target)
 			selected_classes.set(e.target.className.split(" "))
-			selected_ids.set(e.target.id)
-
+			selected_ids.set(e.target.id.split(" "))
+			e.target.style.cursor = "crosshair"
 			e.target.style.border = "1px solid red"
 		}
 	}
 
 	let hoverOut = (e) => {
 		if (debug()) {
+			e.target.style.cursor = "default"
 			e.target.style.border = "none"
 		}
 	}
