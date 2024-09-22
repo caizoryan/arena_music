@@ -14,8 +14,8 @@ const init = () => {
 
 
 // defaults
-// let channel_slug = sig("fish-radio")
-let channel_slug = sig("mixtape-mama")
+let default_channel = "fish-radio"
+let channel_slug = sig("")
 let channel_title = sig("")
 
 // data
@@ -24,6 +24,7 @@ let channel = mut({ contents: [] })
 // init
 eff_on(channel_slug,
 	() => tinyApi.get_channel(channel_slug()).then((res) => {
+		if (!res || !res.title || !res.contents) return
 		channel_title.set(res.title)
 		channel.contents = res.contents.filter((block) => block.class === "Media" || block.class === "Attachment")
 	})
@@ -92,16 +93,27 @@ const Block = (block) => {
 	let duration = sig(d)
 	let current = sig(d)
 	let playing = sig(false)
+	let loading = sig(false)
+	let percentDone = sig(0)
+	let durationRaw = sig(0)
+	let isLoading = mem(() => loading() === true)
+	let notLoading = mem(() => loading() === false)
 
 	let onprogress = (t) => {
 		let totalSeconds = parseInt(t.playedSeconds)
+
+		percentDone.set(t.playedSeconds / durationRaw())
+
 		let minutes = Math.floor(totalSeconds / 60);
 		let seconds = totalSeconds % 60;
+
+		if (seconds < 10) seconds = "0" + seconds
 
 		current.set("[" + minutes + ":" + seconds + "]")
 	}
 
 	let onduration = (t) => {
+		durationRaw.set(t)
 		let totalSeconds = t
 		let minutes = Math.floor(totalSeconds / 60);
 		let seconds = totalSeconds % 60;
@@ -118,11 +130,6 @@ const Block = (block) => {
 		find_next_and_play(block.id)
 	}
 
-
-	let loading = sig(false)
-	let isLoading = mem(() => loading() === true)
-	let notLoading = mem(() => loading() === false)
-
 	let handle_play = () => {
 		if (current() === d) loading.set(true)
 		// set all other blocks to not playing
@@ -138,22 +145,58 @@ const Block = (block) => {
 		pausePlayer()
 	}
 
+	let handle_toggle = () => {
+		if (playing()) {
+			handle_pause()
+		} else {
+			handle_play()
+		}
+	}
+
 	block.handle_play = handle_play
 	block.handle_pause = handle_pause
 	block.playing = playing
 	block.duration = duration
 	block.current = current
+	block.percentDone = percentDone
 
 	return html`
-	.block
+	.block [onclick=${handle_toggle}]
 		img [src=${block?.image?.thumb.url}]
 		.metadata
 			when ${isLoading} then ${() => html`span -- Loading...`}
-			when ${notLoading} then ${() => html`.title -- ${block?.title} `}
-			.duration -- ${current} / ${duration}
-		button [onclick=${handle_play}] -- Play
-		button [onclick=${handle_pause}] -- Pause
+			when ${playing} then ${() => html`span.playing -- (▶)`}
+			when ${notLoading} then ${() => html`span.title -- ${" " + block?.title} `}
 	`
+}
+
+const loaderString = (percent, len = 10) => {
+	console.log("percent", percent)
+	console.log("len", len)
+	console.log("normalized", percent * len)
+	let percentOutOfLen = (percent * len)
+	console.log(percentOutOfLen)
+	let empty = "-"
+	// let full = "x█"
+	let full = "█"
+
+	let cap = Math.floor(percentOutOfLen) + 1
+
+	let loader = Array.from(
+		{ length: len },
+		(_, i) => {
+			let char = empty
+
+			if (i < cap) char = full
+
+			if (i === 0) char = "["
+			if (i === cap) char = "]"
+
+
+			return char
+		}).join("")
+
+	return loader
 }
 
 const Player = () => {
@@ -161,28 +204,40 @@ const Player = () => {
 	let title = mem(() => playing()?.title)
 	let current = mem(() => playing()?.current)
 	let duration = mem(() => playing()?.duration)
+	let percent = mem(() => playing()?.percentDone())
+
+	let hideStyle = mem(() => playing() ? "transform: translateY(0)" : "transform: translateY(400%)")
 
 	let handle_pause = () => playing()?.handle_pause()
 	let handle_play = () => playing() ? playing().handle_play() : (channel.contents[0].handle_play())
 	let handle_next = () => find_next_and_play(playing().id)
 	let handle_previous = () => find_previous_and_play(playing().id)
 
+	let isPlaying = mem(() => playing())
+	let isNotPlaying = mem(() => !isPlaying())
+
 	return html`
-			.controls
-					button [onclick=${handle_previous}] -- Prev
-					button [onclick=${handle_pause}] -- Pause
-					button [onclick=${handle_play}] -- Play
-					button [onclick=${handle_next}] -- Next
-			.meta
+		.player 
+			.controls 
+					button [onclick=${handle_previous}] -- (<<)
+
+					when ${isPlaying} 
+					then ${html`button [onclick=${handle_pause}] -- (pause)`}
+
+					when ${isNotPlaying}
+					then ${html`button [onclick=${handle_play}] -- (▶)`}
+
+					button [onclick=${handle_next}] -- (>>) 
+			.meta [style=${hideStyle}]
 				.song-title -- ${title}
-				.time -- ${current} / ${duration}
+				.duration -- ${current} ${mem(() => loaderString(percent(), 50))} ${duration}
 	`
 }
 const Channel = () => html`
+	.div -- ${Player}
 	.channel
 		.header
 			.title -- ${channel_title}
-			.player -- ${Player}
 		.list
 			each of ${_ => channel.contents} as ${Block}
 	`
@@ -205,7 +260,14 @@ function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
 
 render(Channel, document.querySelector('#mother'))
 
+setTimeout(() => {
+	if (channel_slug() === "") {
+		page("/" + default_channel)
+	}
+}, 200)
+
 window.onload = () => {
 	init();
-	page("/" + channel_slug())
+	// if(channel_slug() === "") channel_slug.set(default_channel)
+	// page()
 }
