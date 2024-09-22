@@ -69,16 +69,35 @@ let channel = mut({ contents: [] })
 
 let css = mut({
 	StyleSheet: {
-		".block": {
-			"color": "white",
-		}
+		".block": {}
 	}
 })
+
+function edit_css_selector(selector, new_selector) {
+	if (selector === new_selector) return
+	let rules = css.StyleSheet[selector]
+	css.StyleSheet[new_selector] = rules
+	delete css.StyleSheet[selector]
+}
+
+function edit_css_rule(selector, key, value) {
+	let rules = css.StyleSheet[selector]
+	if (!rules) return
+
+	rules[key] = value
+}
 
 function create_css_selector(selector) {
 	let exists = css.StyleSheet[selector]
 	if (exists) return
 	css.StyleSheet[selector] = {}
+}
+
+function add_css_rule(selector, key, value) {
+	let rules = css.StyleSheet[selector]
+	if (!rules) return
+
+	rules[key] = value
 }
 
 // Dependent data
@@ -357,14 +376,101 @@ const Player = () => {
 }
 
 const CssItem = ([selector, rules]) => {
-	let key_value = ([key, value]) => html`
+	let key_value = ([key, value]) => {
+		let editKey = sig(false)
+
+		let editingKey = mem(() => editKey())
+		let notEditingKey = mem(() => !editingKey())
+
+		let editKeyToggle = () => {
+			if (editKey()) setTimeout(() => {
+				let el = document.getElementById("selector-input-" + selector + "-key-" + key)
+				el?.focus()
+				el.addEventListener("focusout", () => editSelectorToggle())
+			}, 50)
+		}
+
+
+		let editValueToggle = () => editValue.set(!editValue())
+		let editValue = sig(false)
+
+		let editingValue = mem(() => editValue())
+		let notEditingValue = mem(() => !editingValue())
+
+		let onkeydownKey = (e) => {
+			if (e.key === "Enter") {
+				edit_css_rule(selector, key, e.target.value)
+				editKeyToggle()
+			}
+		}
+
+		let onkeydownValue = (e) => {
+			if (e.key === "Enter") {
+				edit_css_rule(selector, key, e.target.value)
+				editValueToggle()
+			}
+		}
+
+		let keyInputId = "selector-input-" + selector + "-key-" + key
+		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
+		let keyDisplay = html`span [onclick=${editKeyToggle}] -- ${key}`
+
+		let valueInputId = "selector-input-" + selector + "-value-" + key
+		let valueInput = html`input [id=${valueInputId} value=${value} onkeydown=${onkeydownValue} focusout=${editValueToggle}]`
+		let valueDisplay = html`span [onclick=${editValueToggle}] -- ${value}`
+
+		return html`
 			p 
-			span [style=opacity:0] -- _  
-			span -- ${key} : ${value}
+				span [style=opacity:0] -- _ 
+				when ${editingKey} then ${keyInput}
+				when ${notEditingKey} then ${keyDisplay}
+				span -- : 
+				when ${editingValue} then ${valueInput}
+				when ${notEditingValue} then ${valueDisplay}
+				span -- ;
 		`
+	}
+
+	let editSelector = sig(false)
+	let editSelectorToggle = () => {
+		editSelector.set(!editSelector());
+		if (editSelector()) setTimeout(() => {
+			let el = document.getElementById("selector-input-" + selector)
+			el?.focus()
+			el.addEventListener("focusout", () => editSelectorToggle())
+		}, 50)
+	}
+
+	let editingSelector = mem(() => editSelector())
+	let notEditingSelector = mem(() => !editingSelector())
+
+	let onkeydown = (e) => {
+		if (e.key === "Enter") {
+			console.log(e.target.value)
+			edit_css_selector(selector, e.target.value)
+			editSelectorToggle()
+		}
+	}
+
+	let selectorInput = html`
+	input [value=${selector}
+		id=${"selector-input-" + selector}
+		onkeydown=${onkeydown}
+		]`
+
+	let selectorDisplay = html`span [onclick=${editSelectorToggle} ] -- ${selector} `
+
+	let handle_add_rule = () => add_css_rule(selector, "color", "white")
+
+	let rulesIter = mem(() => Object.entries(rules))
+
 	return html`
-		p -- ${selector} {
-		each of ${Object.entries(rules)} as ${key_value}
+		p 
+		 when ${editingSelector} then ${selectorInput}
+		 when ${notEditingSelector} then ${selectorDisplay}
+		 span -- {
+		each of ${rulesIter} as ${key_value}
+		button.add-rule [onclick=${handle_add_rule}] -- +
 		p -- }
 `
 }
@@ -374,19 +480,17 @@ const Editor = () => {
 	let openEditor = () => open.set(true)
 	let closeEditor = () => open.set(false)
 
-	let copyClipboard = (text) => navigator.clipboard.writeText(text)
-
 	let classItem = (item) => {
 		if (item === "") return
 		let government_name = "." + item
-		let c = () => copyClipboard(government_name)
+		let c = () => create_css_selector(government_name)
 		return html`span.rounded [onclick=${c}] -- ${government_name}`
 	}
 
 	let idItem = (item) => {
 		if (item === "") return
 		let government_name = "#" + item
-		let c = () => copyClipboard(government_name)
+		let c = () => create_css_selector(government_name)
 		return html`span.rounded [onclick=${c}] -- ${government_name}`
 	}
 
@@ -394,7 +498,7 @@ const Editor = () => {
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
-			each of ${Object.entries(css.StyleSheet)} as ${CssItem}
+			each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
 			.show-selectors
 				div	
 					p -- Selected Classes
@@ -452,13 +556,14 @@ setTimeout(() => {
 
 window.onload = () => {
 	init();
-	window.addEventListener("keydown", (e) => {
+	document.body.addEventListener("keydown", (e) => {
 		if (e.key === "Shift") {
+			console.log("shift")
 			debug.set(true)
 		}
 	})
 
-	window.addEventListener("keyup", (e) => {
+	document.body.addEventListener("keyup", (e) => {
 		if (e.key === "Shift") {
 			debug.set(false)
 		}
