@@ -4,52 +4,12 @@ import player from "./player.js"
 import page from './page.js';
 
 // ------------------------
-// Model
+// BOOTLEG NOTICE
 // ------------------------
-
-const init = () => {
-	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
-	page({ hashbang: true });
-};
-
-
-// defaults
-let default_channel = "fish-radio"
-let channel_slug = sig("")
-let channel_title = sig("")
-
-// data
-let contents_raw = sig([])
-
-
-let channel = mut({ contents: [] })
-let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
-let cover_image = mem(() => cover()?.image?.display.url)
-
-eff_on(contents_raw, () =>
-	channel.contents = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
-)
-
-// init
-eff_on(channel_slug,
-	() => tinyApi.get_channel(channel_slug()).then((res) => {
-		if (!res || !res.title || !res.contents) return
-		channel_title.set(res.title)
-		contents_raw.set(res.contents)
-	})
-)
-
-const find_next = (id) => {
-	// find the index of the current block
-	let index = channel.contents.findIndex((block) => block.id === id)
-
-	// if the current block is not found, return the first block
-	if (index === -1) return channel.contents[0]
-	if (index === channel.contents.length - 1) return channel.contents[0]
-
-	return channel.contents[index + 1]
-}
-
+// The one trace of exact copy-paste function from :
+// https://github.com/broskoski/mac.are.na/
+// for those of you who don't know, this is a bootleg version of mac.are.na
+// ------------------------
 function getURL(item) {
 	switch (item.class) {
 		case 'Attachment':
@@ -61,17 +21,92 @@ function getURL(item) {
 	}
 }
 
-//
 // ------------------------
-// View
+// Model
 // ------------------------
 
-const Unplayable = () => html`
-	.block
-		.metadata
-			span -- Unplayable`
+const init = () => {
+	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
+	page({ hashbang: true });
+};
 
-let find_previous = (id) => {
+
+// ------------------------
+// Data 
+// ------------------------
+const Config = {
+	auto_refresh: true,
+	auto_refresh_at: .95
+}
+
+// Icons
+const Icons = {
+	play: "[  ▶  ]",
+	pause: "[pause]",
+	next: ">>",
+	prev: "<<",
+
+	editor: "((📝))",
+
+	loading: "⏳",
+	loadingBarFull: "█",
+	loadingBarEmpty: "-",
+	loadingBarCap: "-",
+	loadingBarStart: "[",
+	loadingBarEnd: "]",
+}
+
+// Defaults
+let default_channel = "fish-radio"
+let channel_slug = sig("")
+let channel_title = sig("")
+let debug = sig(false)
+let selected_classes = sig([])
+let selected_ids = sig([])
+
+let contents_raw = sig([])
+let channel = mut({ contents: [] })
+
+// Dependent data
+let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
+let cover_image = mem(() => cover()?.image?.display.url)
+
+// -----------
+// Effects
+// -----------
+eff_on(contents_raw, () => {
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+	channel.contents = filtered
+})
+
+// init
+eff_on(channel_slug, () => refresh_contents(channel_slug()))
+
+function refresh_contents(slug) {
+	tinyApi.get_channel(slug).then((res) => {
+		// if playing, preserve the playing
+		// will not retain duration.. thats fine...
+
+		if (!res || !res.title || !res.contents) return
+		channel_title.set(res.title)
+		contents_raw.set(res.contents)
+
+	})
+
+}
+
+function find_next(id) {
+	// find the index of the current block
+	let index = channel.contents.findIndex((block) => block.id === id)
+
+	// if the current block is not found, return the first block
+	if (index === -1) return channel.contents[0]
+	if (index === channel.contents.length - 1) return channel.contents[0]
+
+	return channel.contents[index + 1]
+}
+
+function find_previous(id) {
 	// find the index of the current block
 	let index = channel.contents.findIndex((block) => block.id === id)
 
@@ -82,19 +117,80 @@ let find_previous = (id) => {
 	return channel.contents[index - 1]
 }
 
-let find_previous_and_play = (id) => {
+function find_previous_and_play(id) {
 	let find = find_previous(id)
 	if (!find.handle_play) {
 		find_previous_and_play(find.id)
 	} else { find.handle_play() }
 }
 
-let find_next_and_play = (id) => {
+function find_next_and_play(id) {
 	let find = find_next(id)
 	if (!find.handle_play) {
 		find_next_and_play(find.id)
 	} else { find.handle_play() }
 }
+
+function pausePlayer(url) {
+	player(container, { url, playing: false })
+}
+
+function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
+	player(container,
+		{
+			url,
+			playing: true,
+			onStart: onStart,
+			onProgress: onProgress,
+			onDuration: onDuration,
+			onEnded: onEnded
+		})
+}
+
+
+//
+// ------------------------
+// View
+// ------------------------
+
+// ------------------------
+// This function is on the cusp of 
+// being a utility function and a view function
+// but it's mostly a view function so keeping it here
+// ------------------------
+//
+function loaderString(percent, len = 10) {
+	let percentOutOfLen = (percent * len)
+	let empty = Icons.loadingBarEmpty
+	let full = Icons.loadingBarFull
+
+	let cap = Math.floor(percentOutOfLen) + 1
+
+	let loader = Array.from(
+		{ length: len },
+		(_, i) => {
+			let char = empty
+
+			if (i < cap) char = full
+
+			if (i === 0) char = Icons.loadingBarStart
+			if (i === len - 1) char = Icons.loadingBarEnd
+			if (i === cap) char = Icons.loadingBarCap
+
+
+			return char
+		}).join("")
+
+	return loader
+}
+
+const Unplayable = () => html`
+	.block
+		.metadata
+			span -- Unplayable`
+
+
+
 const Block = (block) => {
 	let url = getURL(block)
 	if (!url) return Unplayable
@@ -169,6 +265,11 @@ const Block = (block) => {
 		}
 	}
 
+	// ------------------------
+	// set the block's functions
+	// so they are globally accessible
+	// ------------------------
+
 	block.handle_play = handle_play
 	block.handle_pause = handle_pause
 	block.playing = playing
@@ -178,37 +279,13 @@ const Block = (block) => {
 
 
 	return html`
-	.block [onclick=${handle_toggle}]
-		img [src=${image}]
+	.block.test [onclick=${handle_toggle} id=${"block-" + block.id}]
+		img.thumb-image [src=${image}]
 		.metadata
 			when ${isLoading} then ${() => html`span -- Loading...`}
 			when ${playing} then ${() => html`span.playing -- (▶)`}
 			when ${notLoading} then ${() => html`span.title -- ${" " + block?.title} `}
 	`
-}
-
-const loaderString = (percent, len = 10) => {
-	let percentOutOfLen = (percent * len)
-	let empty = "-"
-	let full = "█"
-
-	let cap = Math.floor(percentOutOfLen) + 1
-
-	let loader = Array.from(
-		{ length: len },
-		(_, i) => {
-			let char = empty
-
-			if (i < cap) char = full
-
-			if (i === 0) char = "["
-			if (i === cap) char = "]"
-
-
-			return char
-		}).join("")
-
-	return loader
 }
 
 const Player = () => {
@@ -227,48 +304,69 @@ const Player = () => {
 
 	let isPlaying = mem(() => playing())
 	let isNotPlaying = mem(() => !isPlaying())
+	let dispatchedRefresh = false
+
+	eff_on(playing, () => {
+		if (title()) { document.title = title(); dispatchedRefresh === false }
+		else document.title = "Bootleg Are.na Mixtape: " + channel_title()
+	})
+
+	let loaded = mem(() => {
+		if (percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
+			console.log("refreshing")
+			refresh_contents(channel_slug())
+		}
+
+		return loaderString(percent(), 35)
+	})
 
 	return html`
 		.player 
 			.controls 
-					button [onclick=${handle_previous}] -- <<
+					button [onclick=${handle_previous}] -- ${Icons.prev}
 
 					when ${isPlaying} 
-					then ${html`button [onclick=${handle_pause}] -- [pause]`}
+					then ${html`button [onclick=${handle_pause}] -- ${Icons.pause}`}
 
 					when ${isNotPlaying}
-					then ${html`button [onclick=${handle_play}] -- [  ▶  ]`}
+					then ${html`button [onclick=${handle_play}] -- ${Icons.play}`}
 
-					button [onclick=${handle_next}] -- >> 
+					button [onclick=${handle_next}] -- ${Icons.next} 
 			.meta [style=${hideStyle}]
 				.song-title -- ${title}
-				.duration -- ${current} ${mem(() => loaderString(percent(), 50))} ${duration}
+				.duration -- ${current} ${loaded} ${duration}
 	`
 }
+
+const Editor = () => {
+	let open = sig(false)
+	let openEditor = () => open.set(true)
+	let closeEditor = () => open.set(false)
+
+	return html`
+		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
+		.editor [ activated = ${open} ] 
+			button.close [onclick=${closeEditor}] -- X
+			div.show-selectors
+				p -- Selected Classes
+				p -- ${selected_classes}
+
+				p -- Selected IDs
+				p -- ${selected_ids}
+				
+		`
+
+}
+
 const Channel = () => html`
 	.div -- ${Player}
+	.div -- ${Editor}
 	.channel
 		.header
-			.title -- ${channel_title}
+			.title#channel-header -- ${channel_title}
 		.list
 			each of ${_ => channel.contents} as ${Block}
 	`
-
-function pausePlayer(url) {
-	player(container, { url, playing: false })
-}
-
-function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
-	player(container,
-		{
-			url,
-			playing: true,
-			onStart: onStart,
-			onProgress: onProgress,
-			onDuration: onDuration,
-			onEnded: onEnded
-		})
-}
 
 render(Channel, document.querySelector('#mother'))
 
@@ -276,8 +374,42 @@ setTimeout(() => {
 	if (channel_slug() === "") {
 		page("/" + default_channel)
 	}
+
+	let all = document.body.getElementsByTagName("*")
+
+	let hover = (e) => {
+		if (debug()) {
+			console.log(e.target)
+			selected_classes.set(e.target.className.split(" "))
+			selected_ids.set(e.target.id)
+
+			e.target.style.border = "1px solid red"
+		}
+	}
+
+	let hoverOut = (e) => {
+		if (debug()) {
+			e.target.style.border = "none"
+		}
+	}
+
+	Object.values(all).forEach((el) => {
+		el.addEventListener("mouseover", hover)
+		el.addEventListener("mouseout", hoverOut)
+	})
 }, 200)
 
 window.onload = () => {
 	init();
+	window.addEventListener("keydown", (e) => {
+		if (e.key === "Shift") {
+			debug.set(true)
+		}
+	})
+
+	window.addEventListener("keyup", (e) => {
+		if (e.key === "Shift") {
+			debug.set(false)
+		}
+	})
 }

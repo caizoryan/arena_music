@@ -33,7 +33,7 @@
 		/* -------------------- */
 
 		--primary: #fff;
-		--secondary: #111;
+		--secondary: #0000ee;
 
 		--light-primary: #aaaaaa;
 
@@ -177,6 +177,28 @@
 
 	.player .song-title {
 		margin-right: 4em;
+	}
+
+	button.editor-toggle {
+		position: fixed;
+		top: 1em;
+		right: 1em;
+	}
+
+
+	.editor {
+		position: fixed;
+		top: 1em;
+		right: -100vw;
+		padding: 1em;
+
+		width: 50vw;
+		height: 90vh;
+		background-color: red;
+	}
+
+	.editor[activated="true"] {
+		right: 1em;
 	}
 </style>
 
