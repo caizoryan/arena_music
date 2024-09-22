@@ -202,12 +202,20 @@
 	.css-item-container {
 		height: 65%;
 		overflow-y: scroll;
+		overflow-x: hidden;
 	}
 
 	.css-item {
 		padding: .5em;
 		background-color: var(--light-background);
 		margin-bottom: 1em;
+		width: 95%;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+
+	.selector-item {
+		cursor: crosshair;
 	}
 
 	.editor[activated="true"] {

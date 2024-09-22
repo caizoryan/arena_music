@@ -73,6 +73,17 @@ let css = mut({
 	}
 })
 
+function save_css() {
+	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet))
+}
+
+function load_css() {
+	let saved = localStorage.getItem(channel_slug())
+	if (saved) {
+		css.StyleSheet = JSON.parse(saved)
+	}
+}
+
 let css_string = mem(() => {
 	let c = css.StyleSheet
 	let cssString = ""
@@ -96,6 +107,11 @@ function edit_css_selector(selector, new_selector) {
 function edit_css_rule(selector, key, value, old_key) {
 	if (old_key !== key) {
 		delete css.StyleSheet[selector][old_key]
+	}
+
+	if (key === "" || value === "") {
+		delete css.StyleSheet[selector][key]
+		return
 	}
 
 	let rules = css.StyleSheet[selector]
@@ -430,7 +446,10 @@ const CssItem = ([selector, rules]) => {
 			editKeyToggle()
 		}
 		let onkeydownKey = (e) => {
-			if (e.key === "Enter") saveKeyAndToggle(e)
+			if (e.key === "Enter") {
+				saveKeyAndToggle(e)
+				editValueToggle()
+			}
 		}
 
 		let saveValueAndToggle = (e) => {
@@ -438,7 +457,10 @@ const CssItem = ([selector, rules]) => {
 			editValueToggle()
 		}
 		let onkeydownValue = (e) => {
-			if (e.key === "Enter") saveValueAndToggle(e)
+			if (e.key === "Enter") {
+				saveValueAndToggle(e)
+				add_css_rule(selector, "--- ", " ---")
+			}
 		}
 
 		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
@@ -486,7 +508,23 @@ const CssItem = ([selector, rules]) => {
 		onkeydown=${onkeydown}
 		]`
 
-	let selectorDisplay = html`span [onclick=${editSelectorToggle} ] -- ${selector} `
+	let selectorHoverIn = () => {
+		document.querySelectorAll(selector).forEach((el) => {
+			el.style.border = "1px solid red"
+		})
+	}
+
+	let selectorHoverOut = () => {
+		document.querySelectorAll(selector).forEach((el) => {
+			el.style = ""
+		})
+	}
+
+	let selectorDisplay = html`
+		span.selector-item [onclick=${editSelectorToggle} 
+			onmouseenter=${selectorHoverIn}
+			onmouseleave=${selectorHoverOut}
+		] -- ${selector} `
 
 	let handle_add_rule = () => add_css_rule(selector, "--- ", " ---")
 
@@ -505,7 +543,7 @@ const CssItem = ([selector, rules]) => {
 }
 
 const Editor = () => {
-	let open = sig(true)
+	let open = sig(false)
 	let openEditor = () => open.set(true)
 	let closeEditor = () => open.set(false)
 
@@ -527,6 +565,7 @@ const Editor = () => {
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- X
+			button.save-css [onclick=${save_css}] -- Save CSS
 			.css-item-container
 				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
 			.show-selectors
@@ -583,8 +622,11 @@ setTimeout(() => {
 	})
 }, 200)
 
+
 window.onload = () => {
 	init();
+	load_css()
+
 	document.body.addEventListener("keydown", (e) => {
 		if (e.key === "Shift") {
 			console.log("shift")
