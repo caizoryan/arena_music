@@ -73,6 +73,19 @@ let css = mut({
 	}
 })
 
+let css_string = mem(() => {
+	let c = css.StyleSheet
+	let cssString = ""
+	Object.entries(c).forEach(([selector, rules]) => {
+		cssString += selector + " {"
+		Object.entries(rules).forEach(([key, value]) => {
+			cssString += key + ":" + value + ";"
+		})
+		cssString += "}"
+	})
+	return cssString
+})
+
 function edit_css_selector(selector, new_selector) {
 	if (selector === new_selector) return
 	let rules = css.StyleSheet[selector]
@@ -382,16 +395,27 @@ const CssItem = ([selector, rules]) => {
 		let editingKey = mem(() => editKey())
 		let notEditingKey = mem(() => !editingKey())
 
+
+		let keyInputId = "selector-input-" + selector + "-key-" + key
 		let editKeyToggle = () => {
+			editKey.set(!editKey());
 			if (editKey()) setTimeout(() => {
-				let el = document.getElementById("selector-input-" + selector + "-key-" + key)
+				let el = document.getElementById(keyInputId)
 				el?.focus()
-				el.addEventListener("focusout", () => editSelectorToggle())
+				el?.addEventListener("focusout", () => editKeyToggle())
 			}, 50)
 		}
 
 
-		let editValueToggle = () => editValue.set(!editValue())
+		let valueInputId = "selector-input-" + selector + "-value-" + key
+		let editValueToggle = () => {
+			editValue.set(!editValue())
+			if (editValue()) setTimeout(() => {
+				let el = document.getElementById(valueInputId)
+				el?.focus()
+				el?.addEventListener("focusout", () => editValueToggle())
+			}, 50)
+		}
 		let editValue = sig(false)
 
 		let editingValue = mem(() => editValue())
@@ -399,7 +423,7 @@ const CssItem = ([selector, rules]) => {
 
 		let onkeydownKey = (e) => {
 			if (e.key === "Enter") {
-				edit_css_rule(selector, key, e.target.value)
+				edit_css_rule(selector, e.target.value, value)
 				editKeyToggle()
 			}
 		}
@@ -411,11 +435,9 @@ const CssItem = ([selector, rules]) => {
 			}
 		}
 
-		let keyInputId = "selector-input-" + selector + "-key-" + key
 		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
 		let keyDisplay = html`span [onclick=${editKeyToggle}] -- ${key}`
 
-		let valueInputId = "selector-input-" + selector + "-value-" + key
 		let valueInput = html`input [id=${valueInputId} value=${value} onkeydown=${onkeydownValue} focusout=${editValueToggle}]`
 		let valueDisplay = html`span [onclick=${editValueToggle}] -- ${value}`
 
@@ -437,7 +459,7 @@ const CssItem = ([selector, rules]) => {
 		if (editSelector()) setTimeout(() => {
 			let el = document.getElementById("selector-input-" + selector)
 			el?.focus()
-			el.addEventListener("focusout", () => editSelectorToggle())
+			el?.addEventListener("focusout", () => editSelectorToggle())
 		}, 50)
 	}
 
@@ -460,7 +482,7 @@ const CssItem = ([selector, rules]) => {
 
 	let selectorDisplay = html`span [onclick=${editSelectorToggle} ] -- ${selector} `
 
-	let handle_add_rule = () => add_css_rule(selector, "color", "white")
+	let handle_add_rule = () => add_css_rule(selector, "property", "value")
 
 	let rulesIter = mem(() => Object.entries(rules))
 
@@ -513,6 +535,7 @@ const Editor = () => {
 }
 
 const Channel = () => html`
+	style -- ${css_string}
 	.div -- ${Player}
 	.div -- ${Editor}
 	.channel
@@ -533,7 +556,6 @@ setTimeout(() => {
 
 	let hover = (e) => {
 		if (debug()) {
-			console.log(e.target)
 			selected_classes.set(e.target.className.split(" "))
 			selected_ids.set(e.target.id.split(" "))
 			e.target.style.cursor = "crosshair"
