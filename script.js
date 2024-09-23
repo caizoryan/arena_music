@@ -75,6 +75,7 @@ let css = mut({
 	}
 })
 
+let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
 function save_css() {
 	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet, null, 2))
 }
@@ -148,8 +149,20 @@ function edit_css_rule(selector, key, value, old_key) {
 
 function create_css_selector(selector) {
 	let exists = css.StyleSheet[selector]
-	if (exists) return
-	css.StyleSheet[selector] = {}
+	if (exists) {
+		let class_name = selector_item_class(selector)
+		let existing = document.querySelector("." + class_name.split(" ")[0])
+		existing.scrollIntoView({ behavior: "smooth" })
+		existing.style.border = "1px solid red"
+
+		setTimeout(() => {
+			existing.style = ""
+		}, 2000)
+
+	} else {
+
+		css.StyleSheet[selector] = {}
+	}
 }
 
 function add_css_rule(selector, key, value) {
@@ -445,80 +458,53 @@ const Player = () => {
 	`
 }
 
+const sanitise_css = (str) => {
+	let [property, value] = str.split(":")
+	if (!property || !value) return [Config.default_property, Config.default_value]
+
+	if (property === "") property = Config.default_property
+	if (value === "") value = Config.default_value
+
+	if (value.includes(";")) value = value.replace(";", "")
+
+	return [property, value]
+}
+
 const CssItem = ([selector, rules]) => {
+
 	let key_value = ([key, value]) => {
-		let editKey = sig(false)
+		let editing = sig(false)
 
-		let editingKey = mem(() => editKey())
-		let notEditingKey = mem(() => !editingKey())
+		let isEditing = mem(() => editing())
+		let notEditing = mem(() => !isEditing())
+		let id = "selector-input-" + selector + "-key-" + key
 
-
-		let keyInputId = "selector-input-" + selector + "-key-" + key
-		let editKeyToggle = () => {
-			editKey.set(!editKey());
-			if (editKey()) setTimeout(() => {
-				let el = document.getElementById(keyInputId)
+		let toggleEdit = () => {
+			editing.set(!editing())
+			if (editing()) setTimeout(() => {
+				let el = document.getElementById(id)
 				el?.focus()
-				el?.addEventListener("focusout", saveKeyAndToggle)
-			}, 50)
+				el?.addEventListener("focusout", () => toggleEdit())
+			})
 		}
 
-
-		let valueInputId = "selector-input-" + selector + "-value-" + key
-		let editValueToggle = () => {
-			console.log("editValueToggle")
-			editValue.set(!editValue())
-			if (editValue()) setTimeout(() => {
-				let el = document.getElementById(valueInputId)
-				el?.focus()
-				el?.addEventListener("focusout", saveValueAndToggle)
-			}, 50)
-		}
-		let editValue = sig(false)
-
-		let editingValue = mem(() => editValue())
-		let notEditingValue = mem(() => !editingValue())
-
-		let saveKeyAndToggle = (e) => {
-			edit_css_rule(selector, e.target.value, value, key)
-			editKeyToggle()
-		}
-
-		let onkeydownKey = (e) => {
+		let onkeydown = (e) => {
 			if (e.key === "Enter") {
-				saveKeyAndToggle(e)
-				editValueToggle()
+				let santised = sanitise_css(e.target.value)
+				edit_css_rule(selector, ...santised, key)
+				editing.set(false)
 			}
 		}
 
-		let saveValueAndToggle = (e) => {
-			edit_css_rule(selector, key, e.target.value)
-			editValueToggle()
-		}
-
-		let onkeydownValue = (e) => {
-			if (e.key === "Enter") {
-				saveValueAndToggle(e)
-				add_css_rule(selector, Config.default_property, Config.default_value)
-			}
-		}
-
-		let keyInput = html`input [id=${keyInputId} value=${key} onkeydown=${onkeydownKey}]`
-		let keyDisplay = html`span [onclick=${editKeyToggle}] -- ${key}`
-
-		let valueInput = html`input [id=${valueInputId} value=${value} onkeydown=${onkeydownValue} ]`
-		let valueDisplay = html`span [onclick=${editValueToggle}] -- ${value}`
+		let key_value_display = () => html`span [onclick=${() => editing.set(true)}] -- ${key} : ${value};`
+		let key_value_input = () => html`input [id=${id} value=${key + " : " + value + " ;"} onkeydown=${onkeydown}]`
 
 		return html`
-			p 
+			p
 				span [style=opacity:0] -- _ 
-				when ${editingKey} then ${keyInput}
-				when ${notEditingKey} then ${keyDisplay}
-				span -- : 
-				when ${editingValue} then ${valueInput}
-				when ${notEditingValue} then ${valueDisplay}
-				span -- ;
-		`
+				when ${isEditing} then ${key_value_input}
+				when ${notEditing} then ${key_value_display}
+`
 	}
 
 	let editSelector = sig(false)
@@ -555,7 +541,7 @@ const CssItem = ([selector, rules]) => {
 			if (items.length === 1) {
 				console.log("scrolling")
 				document.querySelector(".list").scrollTo({
-					top: el.offsetTop,
+					top: el.offsetTop - 200,
 					behavior: 'smooth'
 				})
 			}
@@ -568,8 +554,13 @@ const CssItem = ([selector, rules]) => {
 		})
 	}
 
+
+	let s_class = selector_item_class(selector)
+
 	let selectorDisplay = html`
-		span.selector-item [onclick=${editSelectorToggle} 
+		span.selector-item [
+			class = ${s_class}
+			onclick=${editSelectorToggle} 
 			onmouseenter=${selectorHoverIn}
 			onmouseleave=${selectorHoverOut}
 		] -- ${selector} `
@@ -696,3 +687,4 @@ window.onload = () => {
 		}
 	})
 }
+
