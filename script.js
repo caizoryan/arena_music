@@ -1,4 +1,4 @@
-import { render, html, mut, sig, mem, eff_on } from './solid_monke/solid_monke.js'
+import { render, html, mut, sig, mem, eff_on, mounted } from './solid_monke/solid_monke.js'
 import { tinyApi } from './arena.js'
 import player from "./player.js"
 import page from './page.js';
@@ -467,43 +467,35 @@ const sanitise_css = (str) => {
 
 	if (value.includes(";")) value = value.replace(";", "")
 
-	return [property, value]
+	return [property.trim(), value.trim()]
 }
 
 const CssItem = ([selector, rules]) => {
 
 	let key_value = ([key, value]) => {
-		let editing = sig(false)
-
-		let isEditing = mem(() => editing())
-		let notEditing = mem(() => !isEditing())
 		let id = "selector-input-" + selector + "-key-" + key
-
-		let toggleEdit = () => {
-			editing.set(!editing())
-			if (editing()) setTimeout(() => {
-				let el = document.getElementById(id)
-				el?.focus()
-				el?.addEventListener("focusout", () => toggleEdit())
-			})
-		}
 
 		let onkeydown = (e) => {
 			if (e.key === "Enter") {
 				let santised = sanitise_css(e.target.value)
 				edit_css_rule(selector, ...santised, key)
-				editing.set(false)
 			}
 		}
 
-		let key_value_display = () => html`span [onclick=${() => editing.set(true)}] -- ${key} : ${value};`
-		let key_value_input = () => html`input [id=${id} value=${key + " : " + value + " ;"} onkeydown=${onkeydown}]`
+		let key_value_input = () => html`input.key-value [id=${id} value=${key + " : " + value + " ;"} onkeydown=${onkeydown}]`
+
+		mounted(() => {
+			let el = document.getElementById(id)
+			el?.addEventListener("focusout", (e) => {
+				let santised = sanitise_css(e.target.value)
+				edit_css_rule(selector, ...santised, key)
+			})
+		})
 
 		return html`
 			p
-				span [style=opacity:0] -- _ 
-				when ${isEditing} then ${key_value_input}
-				when ${notEditing} then ${key_value_display}
+				span.hide -- _ 
+				span -- ${key_value_input}
 `
 	}
 
@@ -676,7 +668,6 @@ window.onload = () => {
 
 	document.body.addEventListener("keydown", (e) => {
 		if (e.key === "Shift") {
-			console.log("shift")
 			debug.set(true)
 		}
 	})
@@ -684,6 +675,9 @@ window.onload = () => {
 	document.body.addEventListener("keyup", (e) => {
 		if (e.key === "Shift") {
 			debug.set(false)
+			document.querySelectorAll("*").forEach((el) => {
+				el.style = ""
+			})
 		}
 	})
 }
