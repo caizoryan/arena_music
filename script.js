@@ -459,7 +459,8 @@ const Player = () => {
 }
 
 const sanitise_css = (str) => {
-	let [property, value] = str.split(":")
+	let [property, ...value] = str.split(":")
+	value = value.join(":")
 	if (!property || !value) return [Config.default_property, Config.default_value]
 
 	if (property === "") property = Config.default_property
@@ -514,7 +515,6 @@ const CssItem = ([selector, rules]) => {
 
 	let onkeydown = (e) => {
 		if (e.key === "Enter") {
-			console.log(e.target.value)
 			edit_css_selector(selector, e.target.value)
 			editSelectorToggle()
 		}
@@ -530,13 +530,7 @@ const CssItem = ([selector, rules]) => {
 		let items = document.querySelectorAll(selector)
 		items.forEach((el) => {
 			el.style.border = "1px solid red"
-			if (items.length === 1) {
-				console.log("scrolling")
-				document.querySelector(".list").scrollTo({
-					top: el.offsetTop - 200,
-					behavior: 'smooth'
-				})
-			}
+			if (items.length === 1) el.scrollIntoView({ behavior: "smooth" })
 		})
 	}
 
@@ -558,9 +552,6 @@ const CssItem = ([selector, rules]) => {
 		] -- ${selector} `
 
 	let handle_add_rule = () => add_css_rule(selector, Config.default_property, Config.default_value)
-
-
-
 	let rulesIter = mem(() => Object.entries(rules))
 
 	return html`
@@ -584,14 +575,47 @@ const Editor = () => {
 		if (item === "") return
 		let government_name = "." + item
 		let c = () => create_css_selector(government_name)
-		return html`span.rounded [onclick=${c}] -- ${government_name}`
+
+		let hoverIn = () => {
+			let items = document.querySelectorAll(government_name)
+			items.forEach((el) => {
+				el.style.border = "1px solid red"
+			})
+		}
+
+		let hoverOut = () => {
+			document.querySelectorAll(government_name).forEach((el) => {
+				el.style = ""
+			})
+		}
+
+		return html`span.rounded [ 
+			onclick=${c}
+			onmouseover=${hoverIn} 
+			onmouseleave=${hoverOut} ] -- ${government_name}`
 	}
 
 	let idItem = (item) => {
 		if (item === "") return
 		let government_name = "#" + item
 		let c = () => create_css_selector(government_name)
-		return html`span.rounded [onclick=${c}] -- ${government_name}`
+		let hoverIn = () => {
+			let items = document.querySelectorAll(government_name)
+			items.forEach((el) => {
+				el.style.border = "1px solid red"
+			})
+		}
+
+		let hoverOut = () => {
+			document.querySelectorAll(government_name).forEach((el) => {
+				el.style = ""
+			})
+		}
+
+		return html`span.rounded [ 
+			onclick=${c}
+			onmouseover=${hoverIn} 
+			onmouseleave=${hoverOut} ] -- ${government_name}`
 	}
 
 	return html`
@@ -604,6 +628,7 @@ const Editor = () => {
 			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
 			.css-item-container
 				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
+
 			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
 			.show-selectors
 				div	
