@@ -640,7 +640,29 @@ const Editor = () => {
 					each of ${selected_ids} as ${idItem}
 				
 		`
+}
 
+const Home = () => {
+	return html`
+		.channel
+			.header
+				.title -- (Welcome Page) Bootleg Are.na Mixtape
+			.intro
+				h3 -- This is a bootleg version of mac.are.na. 
+				ul
+						li  
+							p -- You have no idea what this is 
+							span.rounded -- What is this?
+						li 
+							p -- You know what this is and want to know how to make a mixtape
+							span.rounded -- How do I make a mixtape?
+						li
+							p -- You made a mixtape and now you want to decorate it with css
+							span.rounded -- How do I CSS this mixtape?
+						li	
+							p -- TIPS and TRICKS
+							span.rounded -- How do I CSS this mixtape?
+`
 }
 
 const Channel = () => html`
@@ -654,13 +676,15 @@ const Channel = () => html`
 			each of ${_ => channel.contents} as ${Block}
 	`
 
-render(Channel, document.querySelector('#mother'))
+const Main = () => html`
+	when ${mem(() => channel_slug() === "")} then ${Home}
+	when ${mem(() => channel_slug() !== "")} then ${Channel}
+	
+`
+
+render(Main, document.querySelector('#mother'))
 
 setTimeout(() => {
-	if (channel_slug() === "") {
-		page("/" + default_channel)
-	}
-
 	let all = document.body.getElementsByTagName("*")
 
 	let hover = (e) => {

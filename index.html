@@ -84,10 +84,35 @@
 
 
 	.list {
-		margin: 1em 1em;
+		margin: 1em;
 		background-color: var(--background);
 		overflow-y: scroll;
 		border: var(--main-border);
+	}
+
+	.intro {
+		margin: 1em;
+		padding: 1em;
+
+	}
+
+
+	.intro h3 {
+		margin-bottom: .5em;
+	}
+
+	.intro li {
+		margin: 2em;
+		padding: 1em;
+		border: 1px solid var(--light-background);
+	}
+
+	li::marker {
+		content: '';
+	}
+
+	li p {
+		margin-bottom: .5em;
 	}
 
 
@@ -265,7 +290,7 @@
 	}
 
 	.rounded {
-		padding: .5em;
+		padding: .3em;
 		background-color: var(--light-primary);
 		border-radius: 1em;
 		margin-right: 1em;
