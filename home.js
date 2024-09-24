@@ -101,10 +101,8 @@ export const Home = () => {
 							h4.pointer -- How do I CSS this playlist?
 						li	
 							h4 -- TIPS, TRICKS and Miscellaneous
-							p
-								span.rounded -- CSS Cookbook
-							p
-								span.rounded -- Evading Youtube Ads
-							p
-								span.rounded -- Notes on Alternative Media Economies`
+							br
+							p.pointer -- CSS Cookbook
+							p.pointer -- Evading Youtube Ads
+							p.pointer -- Notes on Alternative Media Economies`
 }

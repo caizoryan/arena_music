@@ -57,7 +57,7 @@ export const Icons = {
 	loading: "⏳",
 	loadingBarFull: "♥",
 	loadingBarEmpty: "♡",
-	loadingBarCap: "-",
+	loadingBarCap: "♥",
 	loadingBarStart: "[",
 	loadingBarEnd: "]",
 }
@@ -266,9 +266,14 @@ const Block = (block) => {
 	let onduration = (t) => {
 		durationRaw.set(t)
 		let totalSeconds = t
-		let minutes = Math.floor(totalSeconds / 60);
-		let seconds = totalSeconds % 60;
-		duration.set("[" + minutes.toFixed(0) + ":" + seconds.toFixed(0) + "]")
+
+		let minutes = Math.floor(totalSeconds / 60)
+		if (minutes < 10) minutes = "0" + minutes
+
+		let seconds = (totalSeconds % 60).toFixed(0);
+		if (seconds < 10) seconds = "0" + seconds
+
+		duration.set("[" + minutes + ":" + seconds + "]")
 	}
 
 	let onstart = () => {

@@ -54,7 +54,7 @@ export function SearchBar(open) {
 	}
 
 	let classes = mem(() => (open() ? "search-bar open" : "search-bar"))
-	let placeholder = "search channel or paste link"
+	let placeholder = "search channel or paste link (search is buggy, pasting works best)"
 
 	let result = (channel) => html`
 		.search-result [onclick=${() => page("/" + channel.slug)}] -- ${channel.title}

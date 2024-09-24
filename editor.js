@@ -166,9 +166,9 @@ export const Editor = () => {
 	return html`
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
-			button.close [onclick=${closeEditor}] -- X
-			button.save-css [onclick=${save_css}] -- Save CSS
-			button.save-css [onclick=${copy_css}] -- Copy CSS
+			button.close [onclick=${closeEditor}] -- [   X   ]
+			button.save-css [onclick=${save_css}] -- [  Save CSS  ]
+			button.save-css [onclick=${copy_css}] -- [  Copy CSS  ]
 			br
 			.css-item-container
 				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
