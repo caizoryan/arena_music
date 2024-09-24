@@ -1,5 +1,6 @@
 import { html, mut, sig, mem, eff_on, mounted } from './solid_monke/solid_monke.js'
 import { MD } from './md.js';
+import { SearchBar } from './search.js';
 
 export function create_draggable(draggable_elem) {
 	let isDragging = false;
@@ -85,6 +86,8 @@ const how_do_i_make_a_playlist = () => {
 	`
 }
 
+const search_open = sig(true)
+
 
 export const Home = () => {
 	return html`
@@ -92,6 +95,7 @@ export const Home = () => {
 			.header
 				.title -- (Welcome Page) Bootleg Are.na Playlist
 			.intro
+				div -- ${() => SearchBar(search_open)}
 				h3 -- This is a bootleg version of mac.are.na. 
 				ul
 						li -- ${what_is_this}

@@ -4,6 +4,7 @@ import { Editor } from './editor.js';
 import player from "./player.js"
 import page from './page.js';
 import { Home } from './home.js';
+import { css, load_css, safe_json_parse } from './css.js';
 
 // ------------------------
 // BOOTLEG NOTICE
@@ -28,6 +29,7 @@ function getURL(item) {
 // ------------------------
 
 const init = () => {
+	page("/", () => { channel_slug.set("") });
 	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
 	page({ hashbang: true });
 };
@@ -61,7 +63,7 @@ export const Icons = {
 }
 
 // Defaults
-let channel_slug = sig("")
+export let channel_slug = sig("")
 let channel_title = sig("")
 let debug = sig(false)
 export let selected_classes = sig([])
@@ -70,44 +72,7 @@ export let selected_ids = sig([])
 let contents_raw = sig([])
 let channel = mut({ contents: [] })
 
-export let css = mut({
-	StyleSheet: {
-		".block": {}
-	}
-})
-
 export let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
-export function save_css() {
-	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet, null, 2))
-}
-
-export function copy_css() {
-	let cssString = JSON.stringify(css.StyleSheet, null, 2)
-	navigator.clipboard.writeText(cssString)
-}
-
-
-function safe_json_parse(str) {
-	try {
-		return JSON.parse(str)
-	} catch (e) {
-		return false
-	}
-}
-
-function load_css(str) {
-	if (str) {
-		try {
-			str = safe_json_parse(str)
-			if (str) {
-				css.StyleSheet = str
-			}
-		}
-		catch (e) {
-			console.log(e)
-		}
-	}
-}
 
 let css_string = mem(() => {
 	let c = css.StyleSheet
@@ -122,57 +87,6 @@ let css_string = mem(() => {
 	return cssString
 })
 
-export function edit_css_selector(selector, new_selector) {
-	if (selector === new_selector) return
-	if (new_selector === "") {
-		delete css.StyleSheet[selector]
-		return
-	}
-	let rules = css.StyleSheet[selector]
-	css.StyleSheet[new_selector] = rules
-	delete css.StyleSheet[selector]
-}
-
-export function edit_css_rule(selector, key, value, old_key) {
-	if (old_key !== key) {
-		delete css.StyleSheet[selector][old_key]
-	}
-
-	if (key === "" || value === "") {
-		delete css.StyleSheet[selector][key]
-		return
-	}
-
-	let rules = css.StyleSheet[selector]
-	if (!rules) return
-
-	rules[key] = value
-}
-
-export function create_css_selector(selector) {
-	let exists = css.StyleSheet[selector]
-	if (exists) {
-		let class_name = selector_item_class(selector)
-		let existing = document.querySelector("." + class_name.split(" ")[0])
-		existing.scrollIntoView({ behavior: "smooth" })
-		existing.style.border = "1px solid red"
-
-		setTimeout(() => {
-			existing.style = ""
-		}, 2000)
-
-	} else {
-
-		css.StyleSheet[selector] = {}
-	}
-}
-
-export function add_css_rule(selector, key, value) {
-	let rules = css.StyleSheet[selector]
-	if (!rules) return
-
-	rules[key] = value
-}
 
 // Dependent data
 let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
@@ -189,7 +103,8 @@ eff_on(css_block, () => {
 	if (!content) return
 	let parsed = safe_json_parse(content)
 	if (!parsed) return
-	css.StyleSheet = parsed
+	Object.assign(css.StyleSheet, parsed)
+	// css.StyleSheet = parsed
 })
 
 eff_on(contents_raw, () => {
