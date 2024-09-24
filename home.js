@@ -60,10 +60,7 @@ const what_is_this = () => {
 
 	return html`
 		div -- ${card}
-
-		div [onclick=${toggleEditor}]
-			p -- You have no idea what this is 
-			span.rounded -- What is this?
+		h4.pointer [onclick=${toggleEditor}] -- What is this?
 `
 }
 
@@ -79,10 +76,7 @@ const how_do_i_make_a_playlist = () => {
 
 	return html`
 		div -- ${card}
-
-		div [onclick=${toggleEditor}]
-			p -- You know what this is and want to know how to make a playlist
-			span.rounded -- How do I make a playlist?
+		h4.pointer [onclick=${toggleEditor}] -- How do I make a playlist?
 	`
 }
 
@@ -93,19 +87,24 @@ export const Home = () => {
 	return html`
 		.channel
 			.header
-				.title -- (Welcome Page) Bootleg Are.na Playlist
+					.title -- (Welcome Page) Bootleg Are.na Playlist 
+				a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
+					button -- [ Download Source ]
+			div -- ${() => SearchBar(search_open)}
 			.intro
-				div -- ${() => SearchBar(search_open)}
-				h3 -- This is a bootleg version of mac.are.na. 
-				ul
+				.faq
+					h2 -- FAQ
+					ul
 						li -- ${what_is_this}
 						li -- ${how_do_i_make_a_playlist}
 						li
-							p -- You made a playlist and now you want to decorate it with css
-							span.rounded -- How do I CSS this playlist?
+							h4.pointer -- How do I CSS this playlist?
 						li	
-							p -- TIPS, TRICKS and Miscellaneous
-							span.rounded -- CSS Cookbook
-							span.rounded -- Evading Youtube Ads
-							span.rounded -- Notes on Alternative Media Economies`
+							h4 -- TIPS, TRICKS and Miscellaneous
+							p
+								span.rounded -- CSS Cookbook
+							p
+								span.rounded -- Evading Youtube Ads
+							p
+								span.rounded -- Notes on Alternative Media Economies`
 }

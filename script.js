@@ -113,7 +113,13 @@ eff_on(contents_raw, () => {
 })
 
 // init
-eff_on(channel_slug, () => refresh_contents(channel_slug()))
+eff_on(channel_slug, (e) => {
+	css.StyleSheet = {}
+	let local = localStorage.getItem(channel_slug())
+	if (local) load_css(local)
+
+	refresh_contents(channel_slug())
+})
 
 function refresh_contents(slug) {
 	tinyApi.get_channel(slug).then((res) => {

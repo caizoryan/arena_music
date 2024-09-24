@@ -93,7 +93,7 @@
 	.intro {
 		margin: 1em;
 		padding: 1em;
-
+		/* border: var(--dotted-border); */
 	}
 
 	blockquote {
@@ -129,11 +129,51 @@
 		margin-bottom: .5em;
 	}
 
+	.search-bar {
+		/* padding: 2em; */
+		margin: 2em;
+	}
+
+	input.search {
+		width: 100%;
+		height: 2em;
+		padding: .5em;
+	}
+
+	.search-results {
+		max-height: 50vh;
+		overflow-y: scroll;
+		overflow-x: hidden;
+	}
+
+	.search-result {
+		width: 95%;
+		padding: 1em;
+		margin: .5em;
+		background-color: var(--light-background);
+		cursor: pointer;
+	}
+
+	.search-result:hover {
+		background-color: var(--text);
+		color: var(--background);
+	}
+
 
 	span.playing {
 		background-color: var(--primary);
 		color: var(--light-background);
 	}
+
+	.pointer {
+		cursor: pointer;
+	}
+
+	.faq {
+		margin-top: 10vh;
+		font-size: .9em;
+	}
+
 
 	.block {
 		display: grid;
@@ -179,7 +219,7 @@
 	.header {
 		margin: 1rem 1rem .2rem 1rem;
 		padding: 1rem;
-		border: var(--main-border);
+		/* border: var(--main-border); */
 	}
 
 	.header .title {
