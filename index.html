@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Bootleg Are.na Mixtape</title>
+	<title>Bootleg Are.na Playlist</title>
 	<!-- <link rel="stylesheet" type="text/css" href="./style.css"> -->
 </head>
 <style>
@@ -107,8 +107,14 @@
 		border: 1px solid var(--light-background);
 	}
 
-	li::marker {
-		content: '';
+	ol>li::marker {
+		background-color: var(--text);
+		color: var(--light-background);
+		font-size: 1em;
+	}
+
+	ul>li::marker {
+		content: "----> ";
 	}
 
 	li p {
@@ -223,14 +229,22 @@
 	.editor {
 		position: fixed;
 		top: 1em;
-		right: -100vw;
+		right: 1vw;
 		padding: 1em;
+		transform: translate3d(0, 100vw, 0);
 
 		width: 50vw;
 		height: 90vh;
 		background-color: var(--medium-background);
+		transition: all .2s ease-out;
 
 		font-family: "Roboto Mono", 'Departure', monospace;
+	}
+
+	.editor button.close {
+		position: absolute;
+		top: 1em;
+		right: 1em;
 	}
 
 	input.key-value {
@@ -272,7 +286,7 @@
 	}
 
 	.editor[activated="true"] {
-		right: 1em;
+		transform: translate3d(0, 0, 0);
 	}
 
 	.show-selectors {
@@ -306,6 +320,27 @@
 	button.add-rule #debug-selected {
 		border: 2px solid red;
 		cursor: crosshair;
+	}
+
+	.card {
+		position: fixed;
+		right: -100vw;
+
+		width: 60vw;
+		background-color: var(--medium-background);
+		padding: 1em;
+	}
+
+	.card.one {
+		top: 1em;
+	}
+
+	.card.two {
+		top: 2em;
+	}
+
+	.card.open {
+		right: 1em;
 	}
 </style>
 

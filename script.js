@@ -1,7 +1,9 @@
 import { render, html, mut, sig, mem, eff_on, mounted } from './solid_monke/solid_monke.js'
 import { tinyApi } from './arena.js'
+import { Editor } from './editor.js';
 import player from "./player.js"
 import page from './page.js';
+import { Home } from './home.js';
 
 // ------------------------
 // BOOTLEG NOTICE
@@ -34,7 +36,7 @@ const init = () => {
 // ------------------------
 // Data 
 // ------------------------
-const Config = {
+export const Config = {
 	auto_refresh: true,
 	auto_refresh_at: .95,
 	default_property: "____",
@@ -42,48 +44,48 @@ const Config = {
 }
 
 // Icons
-const Icons = {
+export const Icons = {
 	play: "[  ▶  ]",
 	pause: "[pause]",
 	next: ">>",
 	prev: "<<",
 
-	editor: "((📝))",
+	editor: "((EDIT))",
 
 	loading: "⏳",
-	loadingBarFull: "█",
-	loadingBarEmpty: "-",
+	loadingBarFull: "♥",
+	loadingBarEmpty: "♡",
 	loadingBarCap: "-",
 	loadingBarStart: "[",
 	loadingBarEnd: "]",
 }
 
 // Defaults
-let default_channel = "fish-radio"
 let channel_slug = sig("")
 let channel_title = sig("")
 let debug = sig(false)
-let selected_classes = sig([])
-let selected_ids = sig([])
+export let selected_classes = sig([])
+export let selected_ids = sig([])
 
 let contents_raw = sig([])
 let channel = mut({ contents: [] })
 
-let css = mut({
+export let css = mut({
 	StyleSheet: {
 		".block": {}
 	}
 })
 
-let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
-function save_css() {
+export let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
+export function save_css() {
 	localStorage.setItem(channel_slug(), JSON.stringify(css.StyleSheet, null, 2))
 }
 
-function copy_css() {
+export function copy_css() {
 	let cssString = JSON.stringify(css.StyleSheet, null, 2)
 	navigator.clipboard.writeText(cssString)
 }
+
 
 function safe_json_parse(str) {
 	try {
@@ -120,7 +122,7 @@ let css_string = mem(() => {
 	return cssString
 })
 
-function edit_css_selector(selector, new_selector) {
+export function edit_css_selector(selector, new_selector) {
 	if (selector === new_selector) return
 	if (new_selector === "") {
 		delete css.StyleSheet[selector]
@@ -131,7 +133,7 @@ function edit_css_selector(selector, new_selector) {
 	delete css.StyleSheet[selector]
 }
 
-function edit_css_rule(selector, key, value, old_key) {
+export function edit_css_rule(selector, key, value, old_key) {
 	if (old_key !== key) {
 		delete css.StyleSheet[selector][old_key]
 	}
@@ -147,7 +149,7 @@ function edit_css_rule(selector, key, value, old_key) {
 	rules[key] = value
 }
 
-function create_css_selector(selector) {
+export function create_css_selector(selector) {
 	let exists = css.StyleSheet[selector]
 	if (exists) {
 		let class_name = selector_item_class(selector)
@@ -165,7 +167,7 @@ function create_css_selector(selector) {
 	}
 }
 
-function add_css_rule(selector, key, value) {
+export function add_css_rule(selector, key, value) {
 	let rules = css.StyleSheet[selector]
 	if (!rules) return
 
@@ -428,7 +430,7 @@ const Player = () => {
 
 	eff_on(playing, () => {
 		if (title()) { document.title = title(); dispatchedRefresh === false }
-		else document.title = "Bootleg Are.na Mixtape: " + channel_title()
+		else document.title = "Bootleg Are.na playlist: " + channel_title()
 	})
 
 	let loaded = mem(() => {
@@ -458,212 +460,6 @@ const Player = () => {
 	`
 }
 
-const sanitise_css = (str) => {
-	let [property, ...value] = str.split(":")
-	value = value.join(":")
-	if (!property || !value) return [Config.default_property, Config.default_value]
-
-	if (property === "") property = Config.default_property
-	if (value === "") value = Config.default_value
-
-	if (value.includes(";")) value = value.replace(";", "")
-
-	return [property.trim(), value.trim()]
-}
-
-const CssItem = ([selector, rules]) => {
-
-	let key_value = ([key, value]) => {
-		let id = "selector-input-" + selector + "-key-" + key
-
-		let onkeydown = (e) => {
-			if (e.key === "Enter") {
-				let santised = sanitise_css(e.target.value)
-				edit_css_rule(selector, ...santised, key)
-			}
-		}
-
-		let key_value_input = () => html`input.key-value [id=${id} value=${key + " : " + value + " ;"} onkeydown=${onkeydown}]`
-
-		mounted(() => {
-			let el = document.getElementById(id)
-			el?.addEventListener("focusout", (e) => {
-				let santised = sanitise_css(e.target.value)
-				edit_css_rule(selector, ...santised, key)
-			})
-		})
-
-		return html`
-			p
-				span.hide -- _ 
-				span -- ${key_value_input}
-`
-	}
-
-	let editSelector = sig(false)
-	let editSelectorToggle = () => {
-		editSelector.set(!editSelector());
-		if (editSelector()) setTimeout(() => {
-			let el = document.getElementById("selector-input-" + selector)
-			el?.focus()
-			el?.addEventListener("focusout", () => editSelectorToggle())
-		}, 50)
-	}
-
-	let editingSelector = mem(() => editSelector())
-	let notEditingSelector = mem(() => !editingSelector())
-
-	let onkeydown = (e) => {
-		if (e.key === "Enter") {
-			edit_css_selector(selector, e.target.value)
-			editSelectorToggle()
-		}
-	}
-
-	let selectorInput = html`
-	input [value=${selector}
-		id=${"selector-input-" + selector}
-		onkeydown=${onkeydown}
-	]`
-
-	let selectorHoverIn = () => {
-		let items = document.querySelectorAll(selector)
-		items.forEach((el) => {
-			el.style.border = "1px solid red"
-			if (items.length === 1) el.scrollIntoView({ behavior: "smooth" })
-		})
-	}
-
-	let selectorHoverOut = () => {
-		document.querySelectorAll(selector).forEach((el) => {
-			el.style = ""
-		})
-	}
-
-
-	let s_class = selector_item_class(selector)
-
-	let selectorDisplay = html`
-		span.selector-item [
-			class = ${s_class}
-			onclick=${editSelectorToggle} 
-			onmouseenter=${selectorHoverIn}
-			onmouseleave=${selectorHoverOut}
-		] -- ${selector} `
-
-	let handle_add_rule = () => add_css_rule(selector, Config.default_property, Config.default_value)
-	let rulesIter = mem(() => Object.entries(rules))
-
-	return html`
-	.css-item
-		p 
-		 when ${editingSelector} then ${selectorInput}
-		 when ${notEditingSelector} then ${selectorDisplay}
-		 span -- {
-		each of ${rulesIter} as ${key_value}
-		button.add-rule [onclick=${handle_add_rule}] -- +
-		p -- }
-`
-}
-
-const Editor = () => {
-	let open = sig(false)
-	let openEditor = () => open.set(true)
-	let closeEditor = () => open.set(false)
-
-	let classItem = (item) => {
-		if (item === "") return
-		let government_name = "." + item
-		let c = () => create_css_selector(government_name)
-
-		let hoverIn = () => {
-			let items = document.querySelectorAll(government_name)
-			items.forEach((el) => {
-				el.style.border = "1px solid red"
-			})
-		}
-
-		let hoverOut = () => {
-			document.querySelectorAll(government_name).forEach((el) => {
-				el.style = ""
-			})
-		}
-
-		return html`span.rounded [ 
-			onclick=${c}
-			onmouseover=${hoverIn} 
-			onmouseleave=${hoverOut} ] -- ${government_name}`
-	}
-
-	let idItem = (item) => {
-		if (item === "") return
-		let government_name = "#" + item
-		let c = () => create_css_selector(government_name)
-		let hoverIn = () => {
-			let items = document.querySelectorAll(government_name)
-			items.forEach((el) => {
-				el.style.border = "1px solid red"
-			})
-		}
-
-		let hoverOut = () => {
-			document.querySelectorAll(government_name).forEach((el) => {
-				el.style = ""
-			})
-		}
-
-		return html`span.rounded [ 
-			onclick=${c}
-			onmouseover=${hoverIn} 
-			onmouseleave=${hoverOut} ] -- ${government_name}`
-	}
-
-	return html`
-		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
-		.editor [ activated = ${open} ] 
-			button.close [onclick=${closeEditor}] -- X
-			button.save-css [onclick=${save_css}] -- Save CSS
-			button.save-css [onclick=${copy_css}] -- Copy CSS
-			br
-			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
-			.css-item-container
-				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
-
-			button.add-selector [onclick=${() => create_css_selector(".new-selector")}] -- Add Selector
-			.show-selectors
-				div	
-					p -- Selected Classes
-					each of ${selected_classes} as ${classItem}
-
-				div	
-					p -- Selected IDs
-					each of ${selected_ids} as ${idItem}
-				
-		`
-}
-
-const Home = () => {
-	return html`
-		.channel
-			.header
-				.title -- (Welcome Page) Bootleg Are.na Mixtape
-			.intro
-				h3 -- This is a bootleg version of mac.are.na. 
-				ul
-						li  
-							p -- You have no idea what this is 
-							span.rounded -- What is this?
-						li 
-							p -- You know what this is and want to know how to make a mixtape
-							span.rounded -- How do I make a mixtape?
-						li
-							p -- You made a mixtape and now you want to decorate it with css
-							span.rounded -- How do I CSS this mixtape?
-						li	
-							p -- TIPS and TRICKS
-							span.rounded -- How do I CSS this mixtape?
-`
-}
 
 const Channel = () => html`
 	style -- ${css_string}
@@ -707,6 +503,7 @@ setTimeout(() => {
 		el.addEventListener("mouseout", hoverOut)
 	})
 }, 200)
+
 
 
 window.onload = () => {
