@@ -1,7 +1,6 @@
 import { html, sig, mem, mounted, } from './solid_monke/solid_monke.js'
 import { Icons, Config, selected_ids, selected_classes, selector_item_class } from './script.js'
-import { save_css, copy_css, css, } from './css.js'
-import { create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from './css.js';
+import { save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from './css.js';
 
 const sanitise_css = (str) => {
 	let [property, ...value] = str.split(":")

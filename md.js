@@ -10,64 +10,6 @@ let attrs = (item) => {
   return Object.fromEntries(attrs);
 };
 
-let host = "http://api.are.na/v2/";;
-
-const link_is_block = (link) => {
-  return link.includes("are.na/block");
-};
-
-const extract_block_id = (link) => {
-  return link.split("/").pop();
-};
-
-
-function render_block(block_data, x, y, timeout, offline = true) {
-  let side = x > window.innerWidth / 2 ? "left" : "right";
-
-  let block = document.createElement("div");
-  block.id = "id-" + block_data.id;
-  block.href = "#feed-block-" + block_data.id;
-  block.style.position = "fixed";
-  block.style.top = Math.random() * 50 + 100 + "px";
-  block.style[side] = Math.random() * 50 + 100 + "px";
-  block.style.width = "40vw";
-  block.style.height = "40vw";
-  block.onmouseleave = () => {
-    block.setAttribute("hover", "false");
-    block.setAttribute("href", "#feed-block-" + block_data.id);
-    wait_and_hide_block(block_data.id, timeout);
-  };
-
-  block.onclick = () => {
-    let e = {
-      top: document.getElementById("feed-block-" + block_data.id).offsetTop,
-      left: 0,
-      behavior: "smooth"
-    }
-    window.scrollTo(e);
-  }
-
-  block.onmouseenter = () => {
-    block.setAttribute("hover", "true");
-  };
-
-  document.body.appendChild(block);
-  if (offline) setTimeout(() => {
-    block.childNodes.forEach((el) => el.style.pointerEvents = "none", 100)
-  })
-}
-
-function wait_and_hide_block(id, timeout) {
-  if (timeout) clearTimeout(timeout);
-  timeout = setTimeout(() => {
-    let block = document.getElementById("id-" + id);
-    if (block?.getAttribute("hover") !== "true") {
-      block?.remove();
-    } else {
-      wait_and_hide_block(id);
-    }
-  }, 500);
-}
 
 function eat(tree) {
   let ret = [];

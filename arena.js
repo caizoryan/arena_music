@@ -1,8 +1,5 @@
-// import { auth } from "./auth.js";
 let auth = ""
-
 let host = "https://api.are.na/v2/";
-
 
 
 // API functions

@@ -109,6 +109,7 @@ eff_on(css_block, () => {
 
 eff_on(contents_raw, () => {
 	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+	// filtered = filtered.sort((a, b) => b.position - a.position)
 	channel.contents = filtered
 })
 

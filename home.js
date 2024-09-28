@@ -1,4 +1,4 @@
-import { html, mut, sig, mem, eff_on, mounted } from './solid_monke/solid_monke.js'
+import { html, sig, mem } from './solid_monke/solid_monke.js'
 import { MD } from './md.js';
 import { SearchBar } from './search.js';
 

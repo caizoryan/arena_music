@@ -1,6 +1,5 @@
 import { eff_on, html, sig, mem } from "./solid_monke/solid_monke.js"
 import page from "./page.js"
-import { channel_slug } from "./script.js"
 
 async function search(query) {
 	let res = await fetch(`https://api.are.na/v2/search/channels?q=${query}&per=20`)
@@ -16,7 +15,6 @@ const try_parse_channel = (str) => {
 }
 
 export function SearchBar(open) {
-
 	let results = sig([])
 	const onInput = (e) => {
 		let query = e.target.value
