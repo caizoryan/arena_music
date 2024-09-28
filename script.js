@@ -4,7 +4,8 @@ import { Editor } from './editor.js';
 import player from "./player.js"
 import page from './page.js';
 import { Home } from './home.js';
-import { css, load_css, safe_json_parse } from './css.js';
+import { css_string, css, load_css } from './css.js';
+
 
 // ------------------------
 // BOOTLEG NOTICE
@@ -74,18 +75,6 @@ let channel = mut({ contents: [] })
 
 export let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
 
-let css_string = mem(() => {
-	let c = css.StyleSheet
-	let cssString = ""
-	Object.entries(c).forEach(([selector, rules]) => {
-		cssString += selector + " {" + `\n`
-		Object.entries(rules).forEach(([key, value]) => {
-			cssString += `\t` + key + ":" + value + ";" + `\n`
-		})
-		cssString += "}" + `\n\n`
-	})
-	return cssString
-})
 
 
 // Dependent data
@@ -101,10 +90,7 @@ eff_on(css_block, () => {
 	if (!css_block()) return
 	let content = css_block()?.content
 	if (!content) return
-	let parsed = safe_json_parse(content)
-	if (!parsed) return
-	Object.assign(css.StyleSheet, parsed)
-	// css.StyleSheet = parsed
+	load_css(content)
 })
 
 eff_on(contents_raw, () => {
@@ -114,7 +100,7 @@ eff_on(contents_raw, () => {
 })
 
 // init
-eff_on(channel_slug, (e) => {
+eff_on(channel_slug, () => {
 	css.StyleSheet = {}
 	let local = localStorage.getItem(channel_slug())
 	if (local) load_css(local)
@@ -437,7 +423,7 @@ window.onload = () => {
 	init();
 
 	let str = localStorage.getItem(channel_slug())
-	load_css(str)
+	if (str) load_css(str)
 
 	document.body.addEventListener("keydown", (e) => {
 		if (e.key === "Shift") {

@@ -59,10 +59,8 @@ let stupid_fix = (content) => {
 
 
 export const MD = (content) => {
-  console.log(content);
   content = stupid_fix(content);
   let tree = safe_parse(content);
-  console.log([...tree]);
 
   let body;
 

@@ -4,7 +4,6 @@ let host = "https://api.are.na/v2/";
 
 // API functions
 const get_channel = async (slug) => {
-	console.log("get channel called", slug);
 	return await fetch(host + `channels/${slug}?per=100&force=true`, {
 		headers: {
 			Authorization: `Bearer ${auth}`,
@@ -14,11 +13,9 @@ const get_channel = async (slug) => {
 		},
 	})
 		.then((response) => {
-			console.log(response);
 			return response.json();
 		})
 		.then((data) => {
-			console.log(data);
 			return data;
 		});
 };
