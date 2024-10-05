@@ -1,4 +1,4 @@
-import { mut, mem } from "../libraries/solid_monke/solid_monke.js"
+import { sig, mut, mem } from "../libraries/solid_monke/solid_monke.js"
 import { channel_slug } from "../main.js"
 import { selector_item_class } from '../main.js'
 import { css_parse } from "../utilities/css_parser.js"
@@ -9,6 +9,7 @@ export let css = mut({
 	}
 })
 
+export let css_edited = sig(false)
 
 export function clean_rules(rules) {
 	let css_obj = {}
@@ -37,6 +38,7 @@ export function clean_rules(rules) {
 }
 
 export function edit_css_selector(selector, new_selector) {
+
 	if (selector === new_selector) return
 	if (new_selector === "") {
 		delete css.StyleSheet[selector]
@@ -45,6 +47,7 @@ export function edit_css_selector(selector, new_selector) {
 	let rules = css.StyleSheet[selector]
 	css.StyleSheet[new_selector] = rules
 	delete css.StyleSheet[selector]
+	css_edited.set(true)
 }
 
 export function edit_css_rule(selector, key, value, old_key) {
@@ -61,6 +64,7 @@ export function edit_css_rule(selector, key, value, old_key) {
 	if (!rules) return
 
 	rules[key] = value
+	css_edited.set(true)
 }
 
 export function create_css_selector(selector) {
@@ -78,6 +82,7 @@ export function create_css_selector(selector) {
 	} else {
 
 		css.StyleSheet[selector] = {}
+		css_edited.set(true)
 	}
 }
 
@@ -86,11 +91,13 @@ export function add_css_rule(selector, key, value) {
 	if (!rules) return
 
 	rules[key] = value
+	css_edited.set(true)
 }
 
 export function save_css() {
 	let cssString = css_string()
 	localStorage.setItem(channel_slug(), cssString)
+	css_edited.set(false)
 }
 
 export function copy_css() {

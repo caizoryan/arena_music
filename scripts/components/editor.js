@@ -1,6 +1,6 @@
 import { html, sig, mem, mounted, } from '../libraries/solid_monke/solid_monke.js'
 import { Icons, Config, selected_ids, selected_classes, selector_item_class } from '../main.js'
-import { save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from '../utilities/css.js';
+import { css_edited, save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from '../utilities/css.js';
 
 function sanitise_css(str) {
 	let [property, ...value] = str.split(":")
@@ -26,21 +26,38 @@ function CssItem([selector, rules]) {
 	function key_value([key, value]) {
 		if (key.includes("comment")) return html`p.comment -- /* ${value} /*`
 		let id = "selector-input-" + selector + "-key-" + key
+		let _value = key + " : " + value + " ;"
+		if (key === Config.default_property && value === Config.default_value) _value = `\n`
 
 		function onkeydown(e) {
 			if (e.key === "Enter") {
 				let santised = sanitise_css(e.target.value)
-				edit_css_rule(selector, ...santised, key)
+				if (emptyEntry(santised)) deleteEntry()
+				else {
+					edit_css_rule(selector, ...santised, key)
+					e.target.blur()
+					add_css_rule(selector, Config.default_property, Config.default_value)
+				}
 			}
 		}
 
-		let key_value_input = () => html`input.key-value [id=${id} value=${key + " : " + value + " ;"} onkeydown=${onkeydown}]`
+		function emptyEntry(santised) {
+			return santised[0] === Config.default_property && santised[1] === Config.default_value
+		}
+
+		function deleteEntry() {
+			delete css.StyleSheet[selector][key]
+		}
+
+		let key_value_input = () => html`input.key-value [id=${id} value = ${_value} onkeydown=${onkeydown}]`
 
 		mounted(() => {
 			let el = document.getElementById(id)
+			el?.focus()
 			el?.addEventListener("focusout", (e) => {
 				let santised = sanitise_css(e.target.value)
-				edit_css_rule(selector, ...santised, key)
+				if (emptyEntry(santised)) deleteEntry()
+				else edit_css_rule(selector, ...santised, key)
 			})
 		})
 
@@ -61,7 +78,10 @@ function CssItem([selector, rules]) {
 		if (editSelector()) setTimeout(() => {
 			let el = document.getElementById("selector-input-" + selector)
 			el?.focus()
-			el?.addEventListener("focusout", () => editSelectorToggle())
+			el?.addEventListener("focusout", (e) => {
+				edit_css_selector(selector, e.target.value)
+				editSelectorToggle()
+			})
 		}, 50)
 	}
 
@@ -175,11 +195,22 @@ export const Editor = () => {
 			onmouseleave=${hoverOut} ] -- ${government_name}`
 	}
 
+	let save_css_classes = mem(() => {
+		let _class = "save-css"
+		if (css_edited()) _class += " unsaved"
+		return _class
+	})
+
+	let save_text = mem(() => {
+		if (css_edited()) return "[ Save CSS ]"
+		return "Changes Saved"
+	})
+
 	return html`
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- [   X   ]
-			button.save-css [onclick=${save_css}] -- [  Save CSS  ]
+			button [class = ${save_css_classes} onclick=${save_css}] -- ${save_text}
 			button.save-css [onclick=${copy_css}] -- [  Copy CSS  ]
 			br
 			.css-item-container
