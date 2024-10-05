@@ -376,11 +376,11 @@ const Player = () => {
 
 const Channel = () => html`
 	style -- ${css_string}
-	.div -- ${Player}
-	.div -- ${Editor}
+	div -- ${Player}
+	div -- ${Editor}
 	.channel
 		.header
-			.title#channel-header -- ${channel_title}
+			h1.title#channel-header -- ${channel_title}
 		.list
 			each of ${_ => channel.contents} as ${Block}
 	`
