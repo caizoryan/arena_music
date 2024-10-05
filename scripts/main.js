@@ -1,4 +1,4 @@
-import { render, html, mut, sig, mem, eff_on, mounted } from './libraries/solid_monke/solid_monke.js'
+import { render, html, mut, sig, mem, eff_on } from './libraries/solid_monke/solid_monke.js'
 import { tinyApi } from './utilities/arena.js'
 import { Editor } from './components/editor.js';
 import player from "./utilities/player.js"
