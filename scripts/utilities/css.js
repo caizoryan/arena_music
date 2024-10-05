@@ -1,7 +1,7 @@
-import { mut, mem } from "./solid_monke/solid_monke.js"
-import { channel_slug } from "./script.js"
-import { selector_item_class } from './script.js'
-import { css_parse } from "./css_parser/css_parser.js"
+import { mut, mem } from "../libraries/solid_monke/solid_monke.js"
+import { channel_slug } from "../main.js"
+import { selector_item_class } from '../main.js'
+import { css_parse } from "../utilities/css_parser.js"
 
 export let css = mut({
 	StyleSheet: {
@@ -21,6 +21,12 @@ export function clean_rules(rules) {
 		declarations.forEach((declaration) => {
 			let property = declaration.property
 			let value = declaration.value
+			if (property === "" || value === "") {
+				if (declaration.type === "comment") {
+					let uid = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+					props["comment-" + uid] = value
+				}
+			}
 			props[property] = value
 		})
 
@@ -118,6 +124,16 @@ export function load_css_json(str) {
 		}
 	}
 }
+let test_str = `
+	:root {
+		border-radius: 10px;
+	}
+
+`
+
+let test_obj = css_parse(test_str)
+
+console.log(test_obj)
 
 export function load_css(str) {
 	let css_obj
@@ -144,6 +160,12 @@ export let css_string = mem(() => {
 	Object.entries(c).forEach(([selector, rules]) => {
 		cssString += selector + " {" + `\n`
 		Object.entries(rules).forEach(([key, value]) => {
+
+			if (key.includes("comment")) {
+				cssString += `\t` + "/* " + value + " */" + `\n`
+				return
+			}
+
 			cssString += `\t` + key + ":" + value + ";" + `\n`
 		})
 		cssString += "}" + `\n\n`

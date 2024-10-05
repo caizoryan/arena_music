@@ -1,5 +1,5 @@
-import { eff_on, html, sig, mem } from "./solid_monke/solid_monke.js"
-import page from "./page.js"
+import { eff_on, html, sig, mem } from "../libraries/solid_monke/solid_monke.js"
+import page from "../utilities/page.js"
 
 async function search(query) {
 	let res = await fetch(`https://api.are.na/v2/search/channels?q=${query}&per=20`)

@@ -1,10 +1,10 @@
-import { render, html, mut, sig, mem, eff_on, mounted } from './solid_monke/solid_monke.js'
-import { tinyApi } from './arena.js'
-import { Editor } from './editor.js';
-import player from "./player.js"
-import page from './page.js';
-import { Home } from './home.js';
-import { css_string, css, load_css } from './css.js';
+import { render, html, mut, sig, mem, eff_on, mounted } from './libraries/solid_monke/solid_monke.js'
+import { tinyApi } from './utilities/arena.js'
+import { Editor } from './components/editor.js';
+import player from "./utilities/player.js"
+import page from './utilities/page.js';
+import { Home } from './components/home.js';
+import { css_string, css, load_css } from './utilities/css.js';
 
 
 // ------------------------

@@ -1,5 +1,5 @@
-import { html, sig, mem } from './solid_monke/solid_monke.js'
-import { MD } from './md.js';
+import { html, sig, mem } from '../libraries/solid_monke/solid_monke.js'
+import { MD } from '../utilities/md.js';
 import { SearchBar } from './search.js';
 
 export function create_draggable(draggable_elem) {

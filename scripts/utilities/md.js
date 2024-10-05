@@ -1,8 +1,8 @@
-import { h } from "./solid_monke/solid_monke.js";
-import markdownIt from "./markdown-it/markdown-it.js";
-import makrdownItMark from "./markdown-it/markdown-it-mark.js";
+import { h } from "../libraries/solid_monke/solid_monke.js";
+import markdownIt from "../libraries/markdown-it/markdown-it.js";
+import markdownItMark from "../libraries/markdown-it/markdown-it-mark.js";
 
-let md = new markdownIt().use(makrdownItMark);
+let md = new markdownIt().use(markdownItMark);
 
 let attrs = (item) => {
   let attrs = item.attrs;

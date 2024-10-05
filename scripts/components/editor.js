@@ -1,8 +1,8 @@
-import { html, sig, mem, mounted, } from './solid_monke/solid_monke.js'
-import { Icons, Config, selected_ids, selected_classes, selector_item_class } from './script.js'
-import { save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from './css.js';
+import { html, sig, mem, mounted, } from '../libraries/solid_monke/solid_monke.js'
+import { Icons, Config, selected_ids, selected_classes, selector_item_class } from '../main.js'
+import { save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector } from '../utilities/css.js';
 
-const sanitise_css = (str) => {
+function sanitise_css(str) {
 	let [property, ...value] = str.split(":")
 	value = value.join(":")
 	if (!property || !value) return [Config.default_property, Config.default_value]
@@ -15,12 +15,19 @@ const sanitise_css = (str) => {
 	return [property.trim(), value.trim()]
 }
 
-const CssItem = ([selector, rules]) => {
+function CssItem([selector, rules]) {
 
-	let key_value = ([key, value]) => {
+	// ------------------------------------------------
+	// ------------------------------------------------
+	// Key Value Pair Component
+	// [in local scope so has access to selector]
+	// ------------------------------------------------
+	// ------------------------------------------------
+	function key_value([key, value]) {
+		if (key.includes("comment")) return html`p.comment -- /* ${value} /*`
 		let id = "selector-input-" + selector + "-key-" + key
 
-		let onkeydown = (e) => {
+		function onkeydown(e) {
 			if (e.key === "Enter") {
 				let santised = sanitise_css(e.target.value)
 				edit_css_rule(selector, ...santised, key)
@@ -40,12 +47,16 @@ const CssItem = ([selector, rules]) => {
 		return html`
 			p
 				span.hide -- _ 
-				span -- ${key_value_input}
-`
+				span -- ${key_value_input}`
 	}
+	// ------------------------------------------------
+	// ------------------------------------------------
 
 	let editSelector = sig(false)
-	let editSelectorToggle = () => {
+	let editingSelector = mem(() => editSelector())
+	let notEditingSelector = mem(() => !editingSelector())
+
+	function editSelectorToggle() {
 		editSelector.set(!editSelector());
 		if (editSelector()) setTimeout(() => {
 			let el = document.getElementById("selector-input-" + selector)
@@ -54,23 +65,16 @@ const CssItem = ([selector, rules]) => {
 		}, 50)
 	}
 
-	let editingSelector = mem(() => editSelector())
-	let notEditingSelector = mem(() => !editingSelector())
 
-	let onkeydown = (e) => {
+	function onkeydown(e) {
 		if (e.key === "Enter") {
 			edit_css_selector(selector, e.target.value)
 			editSelectorToggle()
 		}
 	}
 
-	let selectorInput = html`
-	input [value=${selector}
-		id=${"selector-input-" + selector}
-		onkeydown=${onkeydown}
-	]`
 
-	let selectorHoverIn = () => {
+	function selectorHoverIn() {
 		let items = document.querySelectorAll(selector)
 		items.forEach((el) => {
 			el.style.border = "1px solid red"
@@ -78,35 +82,42 @@ const CssItem = ([selector, rules]) => {
 		})
 	}
 
-	let selectorHoverOut = () => {
+	function selectorHoverOut() {
 		document.querySelectorAll(selector).forEach((el) => {
 			el.style = ""
 		})
 	}
 
 
-	let s_class = selector_item_class(selector)
+	let selectorClass = selector_item_class(selector)
 
-	let selectorDisplay = html`
+	let handleAddRule = () => add_css_rule(selector, Config.default_property, Config.default_value)
+	let rulesIterable = mem(() => Object.entries(rules))
+
+	const selectorInput = html`
+		input [value=${selector}
+			id=${"selector-input-" + selector}
+			onkeydown=${onkeydown}
+		]`
+
+	const selectorDisplay = html`
 		span.selector-item [
-			class = ${s_class}
+			class = ${selectorClass}
 			onclick=${editSelectorToggle} 
 			onmouseenter=${selectorHoverIn}
 			onmouseleave=${selectorHoverOut}
 		] -- ${selector} `
 
-	let handle_add_rule = () => add_css_rule(selector, Config.default_property, Config.default_value)
-	let rulesIter = mem(() => Object.entries(rules))
 
 	return html`
-	.css-item
-		p 
-		 when ${editingSelector} then ${selectorInput}
-		 when ${notEditingSelector} then ${selectorDisplay}
-		 span -- {
-		each of ${rulesIter} as ${key_value}
-		button.add-rule [onclick=${handle_add_rule}] -- +
-		p -- }
+		.css-item
+			p 
+			 when ${editingSelector} then ${selectorInput}
+			 when ${notEditingSelector} then ${selectorDisplay}
+			 span -- {
+			each of ${rulesIterable} as ${key_value}
+			button.add-rule [onclick=${handleAddRule}] -- +
+			p -- }
 `
 }
 
@@ -115,19 +126,19 @@ export const Editor = () => {
 	let openEditor = () => open.set(true)
 	let closeEditor = () => open.set(false)
 
-	let classItem = (item) => {
+	function classItem(item) {
 		if (item === "") return
 		let government_name = "." + item
 		let c = () => create_css_selector(government_name)
 
-		let hoverIn = () => {
+		function hoverIn() {
 			let items = document.querySelectorAll(government_name)
 			items.forEach((el) => {
 				el.style.border = "1px solid red"
 			})
 		}
 
-		let hoverOut = () => {
+		function hoverOut() {
 			document.querySelectorAll(government_name).forEach((el) => {
 				el.style = ""
 			})
@@ -139,18 +150,20 @@ export const Editor = () => {
 			onmouseleave=${hoverOut} ] -- ${government_name}`
 	}
 
-	let idItem = (item) => {
+	function idItem(item) {
+
 		if (item === "") return
 		let government_name = "#" + item
 		let c = () => create_css_selector(government_name)
-		let hoverIn = () => {
+
+		function hoverIn() {
 			let items = document.querySelectorAll(government_name)
 			items.forEach((el) => {
 				el.style.border = "1px solid red"
 			})
 		}
 
-		let hoverOut = () => {
+		function hoverOut() {
 			document.querySelectorAll(government_name).forEach((el) => {
 				el.style = ""
 			})
