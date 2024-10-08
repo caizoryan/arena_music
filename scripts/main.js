@@ -396,15 +396,15 @@ const Player = () => {
 	return html`
 		.player 
 			.controls 
-					button.prev [onclick=${PlayerControls.previous}] -- ${Icons.prev}
+					button.prev.control-btn [onclick=${PlayerControls.previous}] -- ${Icons.prev}
 
 					when ${isPlaying} 
-					then ${html`button.pause [onclick=${PlayerControls.pause}] -- ${Icons.pause}`}
+					then ${html`button.pause.control-btn [onclick=${PlayerControls.pause}] -- ${Icons.pause}`}
 
 					when ${isNotPlaying}
-					then ${html`button.play [onclick=${PlayerControls.play}] -- ${Icons.play}`}
+					then ${html`button.play.control-btn [onclick=${PlayerControls.play}] -- ${Icons.play}`}
 
-					button.next [onclick=${PlayerControls.next}] -- ${Icons.next} 
+					button.next.control-btn [onclick=${PlayerControls.next}] -- ${Icons.next} 
 			.metadata [style=${hide}]
 				.song-title -- ${PlayerControls.title}
 				.duration -- ${PlayerControls.current} ${loaded} ${PlayerControls.duration}
