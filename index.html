@@ -53,12 +53,12 @@
 
 		font-family: "Roboto Mono", 'Departure', monospace;
 		z-index: 998;
-		transition: all .2s ease-out;
+		transition: transform .2s ease-out;
 	}
 
 	.editor[activated="true"] {
 		transform: translate3d(0, 0, 0);
-		transition: all .02s ease-out;
+		transition: transform .2s ease-out;
 	}
 
 	.css-library {
@@ -69,7 +69,7 @@
 		overflow-y: scroll;
 
 		background-color: var(--background);
-		transition: all .2s ease-out;
+		transition: transform .2s ease-out;
 
 		width: 400px;
 		height: 80vh;
@@ -235,9 +235,10 @@
 <script type='module' src="./scripts/main.js"></script>
 <script>
 	setTimeout(() => {
-		$(".editor").draggable();
-		// document.querySelector('.editor').setAttribute('activated', 'true');
-		// document.querySelector('.css-library').setAttribute('activated', 'true');
+		if ($) {
+			$(".editor").draggable();
+			$(".css-library").draggable();
+		}
 	}, 1000);
 </script>
 
