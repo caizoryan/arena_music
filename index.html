@@ -17,25 +17,8 @@
 		src: url('./fonts/bianzhidai_noBG/OTF/bianzhidai_noBG-Ring.otf') format('opentype');
 	}
 
-	#container {
-		display: none;
-	}
 
 	:root {
-
-		/* -------------------- */
-		/* ---- DARK MODE ----*/
-		/* -------------------- */
-
-		--primary: #fff;
-		--secondary: #111;
-
-		--light-primary: #aaaaaa;
-		--medium-primary: #666;
-
-		--light-background: #333;
-		--medium-background: #222;
-
 		/* -------------------- */
 		/* ---- Light MODE ----*/
 		/* -------------------- */
@@ -47,6 +30,7 @@
 
 		--light-background: #aaa;
 		--medium-background: #ccc;
+		--accent: #f00;
 
 		/* -------------------- */
 		/* ---- Dependent ----*/
@@ -67,6 +51,10 @@
 		color: var(--text);
 	}
 
+	#container {
+		display: none;
+	}
+
 	body {
 		background-color: var(--background);
 	}
@@ -77,10 +65,62 @@
 		width: min-content;
 	}
 
+	button {
+		background-color: var(--light-background)
+	}
+
+	p {
+		margin: .3em;
+	}
+
 	button.editor-toggle {
 		position: fixed;
 		top: 1em;
 		right: 1em;
+	}
+
+	.thumb-image {
+		width: 50px;
+	}
+
+	.block.playing .title {
+		background-color: var(--text);
+		color: var(--background);
+
+	}
+
+	.loading {
+		background-color: var(--text);
+		color: var(--background);
+		animation: hover 1s infinite;
+
+	}
+
+	.debug-hovered {
+		border: 2px solid red !important;
+	}
+
+
+	@keyframes hover {
+		0% {
+			opacity: 0;
+		}
+
+		50% {
+			opacity: 1;
+		}
+
+		100% {
+			opacity: 0;
+		}
+	}
+
+	.block:hover {
+		cursor: pointer;
+	}
+
+	.block:hover>* {
+		background-color: var(--light-background);
 	}
 
 	.hide {
@@ -176,7 +216,7 @@
 
 	.rounded {
 		padding: .3em;
-		background-color: var(--light-primary);
+		background-color: var(--light-background);
 		border-radius: 1em;
 		margin-right: 1em;
 		cursor: pointer;

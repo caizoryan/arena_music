@@ -9,6 +9,34 @@ export let css = mut({
 	}
 })
 
+
+let default_css = `
+	:root {
+		/* -------------------- */
+		/* ---- Light MODE ----*/
+		/* -------------------- */
+		--primary: #111;
+		--secondary: #eee;
+
+		--light-primary: #444;
+		--medium-primary: #666;
+
+		--light-background: #aaa;
+		--medium-background: #ccc;
+
+		/* -------------------- */
+		/* ---- Dependent ----*/
+		/* -------------------- */
+		--background: var(--secondary);
+		--text: var(--primary);
+
+		--main-border: 1px solid var(--light-primary);
+		--dotted-border: 1px dotted var(--light-primary);
+	}
+
+`
+
+
 export let css_edited = sig(false)
 
 export function clean_rules(rules) {
@@ -131,16 +159,7 @@ export function load_css_json(str) {
 		}
 	}
 }
-let test_str = `
-	:root {
-		border-radius: 10px;
-	}
 
-`
-
-let test_obj = css_parse(test_str)
-
-console.log(test_obj)
 
 export function load_css(str) {
 	let css_obj
@@ -157,6 +176,8 @@ export function load_css(str) {
 	Object.entries(cleaned).forEach(([selector, rules]) => {
 		if (!css.StyleSheet[selector]) css.StyleSheet[selector] = {}
 		Object.assign(css.StyleSheet[selector], rules)
+		console.log("loaded css: ", selector, rules)
+		console.log("css: ", css.StyleSheet)
 	})
 
 }
@@ -180,3 +201,4 @@ export let css_string = mem(() => {
 	return cssString
 })
 
+setTimeout(() => load_css(default_css), 1000)

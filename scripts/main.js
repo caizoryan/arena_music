@@ -65,10 +65,12 @@ export const Icons = {
 
 // Defaults
 export let channel_slug = sig("")
-let channel_title = sig("")
-let debug = sig(false)
 export let selected_classes = sig([])
 export let selected_ids = sig([])
+
+let channel_title = sig("")
+let debug = sig(false)
+let dispatchedRefresh = false
 
 let contents_raw = sig([])
 let channel = mut({ contents: [] })
@@ -91,6 +93,9 @@ eff_on(css_block, () => {
 	let content = css_block()?.content
 	if (!content) return
 	load_css(content)
+	// give priority to the local css, write on top
+	let local_css = localStorage.getItem(channel_slug())
+	if (load_css) load_css(local_css)
 })
 
 eff_on(contents_raw, () => {
@@ -274,7 +279,7 @@ const Block = (block) => {
 	}
 
 	let handle_play = () => {
-		if (current() === d) loading.set(true)
+		loading.set(true)
 		// set all other blocks to not playing
 		channel.contents.forEach((block) => {
 			if (block.handle_pause) block.handle_pause()
@@ -308,75 +313,86 @@ const Block = (block) => {
 	block.current = current
 	block.percentDone = percentDone
 
+	let _class = mem(() => "block block-" + block.class + " " + (block.playing() ? "playing" : ""))
 
 	return html`
 	div [
 			onclick=${handle_toggle}
-			class = ${"block " + block.class}
+			class = ${_class}
 			id = ${"block-" + block.id}]
 
 		img.thumb-image [src=${image}]
-		.metadata
-			when ${isLoading} then ${() => html`span -- Loading...`}
+		span.metadata
+			when ${isLoading} then ${() => html`span.loading -- Loading...`}
 			when ${playing} then ${() => html`span.playing -- (▶)`}
 			when ${notLoading} then ${() => html`span.title -- ${" " + block?.title} `}
 	`
 }
 
+const playing = mem(() => channel.contents.find((block) => { if (block?.playing) return block.playing() === true }))
+
+const Controller = {
+	playing: playing,
+	title: mem(() => playing()?.title),
+	current: mem(() => playing()?.current),
+	duration: mem(() => playing()?.duration),
+	percent: mem(() => playing()?.percentDone()),
+
+
+	pause: () => playing()?.handle_pause(),
+	play: () => playing() ? playing().handle_play() : (channel.contents[0].handle_play()),
+	next: () => find_next_and_play(playing()?.id),
+	previous: () => find_previous_and_play(playing()?.id)
+}
+
+eff_on(Controller.playing, () => {
+	if (Controller.title()) { document.title = Controller.title(); dispatchedRefresh === false }
+	else document.title = "Bootleg Are.na playlist: " + channel_title()
+})
+
 const Player = () => {
-	let playing = mem(() => channel.contents.find((block) => { if (block?.playing) return block.playing() === true }))
-	let title = mem(() => playing()?.title)
-	let current = mem(() => playing()?.current)
-	let duration = mem(() => playing()?.duration)
-	let percent = mem(() => playing()?.percentDone())
+	let isPlaying = mem(() => Controller.playing())
+	let isNotPlaying = mem(() => !Controller.playing())
 
-	let hideStyle = mem(() => playing() ? "transform: translateY(0)" : "transform: translateY(400%)")
+	let hideStyle = mem(() => Controller.playing() ? "transform: translateY(0); opacity: 1;" : "transform: translateY(400%); opacity: 0;")
 
-	let handle_pause = () => playing()?.handle_pause()
-	let handle_play = () => playing() ? playing().handle_play() : (channel.contents[0].handle_play())
-	let handle_next = () => find_next_and_play(playing().id)
-	let handle_previous = () => find_previous_and_play(playing().id)
-
-	let isPlaying = mem(() => playing())
-	let isNotPlaying = mem(() => !isPlaying())
-	let dispatchedRefresh = false
-
-	eff_on(playing, () => {
-		if (title()) { document.title = title(); dispatchedRefresh === false }
-		else document.title = "Bootleg Are.na playlist: " + channel_title()
-	})
 
 	let loaded = mem(() => {
-		if (percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
+		if (Controller.percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
 			console.log("refreshing")
 			refresh_contents(channel_slug())
 		}
 
-		return loaderString(percent(), 35)
+		return loaderString(Controller.percent(), 35)
 	})
 
-	return html`
+	let fn = () => html`
 		.player 
 			.controls 
-					button [onclick=${handle_previous}] -- ${Icons.prev}
+					button [onclick=${Controller.previous}] -- ${Icons.prev}
 
 					when ${isPlaying} 
-					then ${html`button [onclick=${handle_pause}] -- ${Icons.pause}`}
+					then ${html`button [onclick=${Controller.pause}] -- ${Icons.pause}`}
 
 					when ${isNotPlaying}
-					then ${html`button [onclick=${handle_play}] -- ${Icons.play}`}
+					then ${html`button [onclick=${Controller.play}] -- ${Icons.play}`}
 
-					button [onclick=${handle_next}] -- ${Icons.next} 
+					button [onclick=${Controller.next}] -- ${Icons.next} 
 			.meta [style=${hideStyle}]
-				.song-title -- ${title}
-				.duration -- ${current} ${loaded} ${duration}
+				.song-title -- ${Controller.title}
+				.duration -- ${Controller.current} ${loaded} ${Controller.duration}
 	`
+
+
+	return fn
 }
+
+let PlayerInstance = Player()
 
 
 const Channel = () => html`
 	style -- ${css_string}
-	div -- ${Player}
+	div -- ${PlayerInstance}
 	div -- ${Editor}
 	.channel
 		.header
@@ -400,13 +416,16 @@ setTimeout(() => {
 		if (debug()) {
 			selected_classes.set(e.target.className.split(" "))
 			selected_ids.set(e.target.id.split(" "))
-			e.target.style.cursor = "crosshair"
-			e.target.style.border = "1px solid red"
+			e.target.classList.add("debug-hovered")
+
+			// e.target.style.cursor = "crosshair"
+			// e.target.style.border = "1px solid red"
 		}
 	}
 
 	let hoverOut = (e) => {
 		if (debug()) {
+			e.target.classList.remove("debug-hovered")
 			e.target.style = ""
 		}
 	}
@@ -424,18 +443,33 @@ window.onload = () => {
 
 	let str = localStorage.getItem(channel_slug())
 	if (str) load_css(str)
+	console.log("loaded css")
 
 	document.body.addEventListener("keydown", (e) => {
-		if (e.key === "Shift") {
+		// or operator js is: ||
+		if (e.key === "Control" || e.key === "Meta") {
 			debug.set(true)
+			console.log("debugging")
 		}
+		if (e.key === " ") {
+			Controller.playing() ? Controller.pause() : Controller.play()
+		}
+
+		if (e.key === "N") {
+			find_next_and_play(Controller.playing().id)
+		}
+
+		if (e.key === "P") {
+			find_previous_and_play(Controller.playing().id)
+		}
+
 	})
 
 	document.body.addEventListener("keyup", (e) => {
-		if (e.key === "Shift") {
+		if (e.key === "Control" || e.key === "Meta") {
 			debug.set(false)
 			document.querySelectorAll("*").forEach((el) => {
-				el.style = ""
+				el.classList.remove("debug-hovered")
 			})
 		}
 	})
