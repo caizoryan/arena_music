@@ -40,7 +40,7 @@ const init = () => {
 // Data 
 // ------------------------
 export const Config = {
-	auto_refresh: true,
+	auto_refresh: false,
 	auto_refresh_at: .95,
 	default_property: "____",
 	default_value: "____"

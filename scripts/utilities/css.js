@@ -150,6 +150,22 @@ export function load_css(str) {
 
 }
 
+export const temporary_css_applier = (str) => {
+	let old = JSON.parse(JSON.stringify(css.StyleSheet))
+	let apply = () => {
+		old = JSON.parse(JSON.stringify(css.StyleSheet))
+		load_css(str)
+	}
+
+	let revert = () => {
+		console.log("reverting")
+		css.StyleSheet = old
+	}
+
+	return { apply, revert }
+
+}
+
 export let css_string = mem(() => {
 	let c = css.StyleSheet
 	let cssString = ""

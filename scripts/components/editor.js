@@ -1,7 +1,7 @@
 import { html, sig, mem, mounted, } from '../libraries/solid_monke/solid_monke.js'
 import { Icons, Config, selected_ids, selected_classes, selector_item_class } from '../main.js'
 import { tinyApi } from '../utilities/arena.js';
-import { css_edited, save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector, load_css } from '../utilities/css.js';
+import { css_edited, save_css, copy_css, css, create_css_selector, add_css_rule, edit_css_rule, edit_css_selector, load_css, temporary_css_applier } from '../utilities/css.js';
 import { MD } from '../utilities/md.js';
 
 function sanitise_css(str) {
@@ -221,9 +221,30 @@ export const Editor = () => {
 		load_css(block.content)
 	}
 
+
+
 	const css_block = (block) => {
+
+		let css_temp = temporary_css_applier(block.content)
+
+		const onmouseover = (e) => {
+			css_temp?.apply()
+		}
+
+		const onmouseleave = (e) => {
+			css_temp?.revert()
+		}
+
+		const onclick = (e) => {
+			css_temp = undefined
+			load_block_to_css(block)
+		}
+
 		if (block.class === "Text") return html`
-			.css-block [onclick=${_ => load_block_to_css(block)}]
+			.css-block [
+				onclick=${onclick} 
+				onmouseenter=${onmouseover}
+				onmouseleave=${onmouseleave} ]
 				span --${MD(block.content)}
 			p -- ${block.title} by ${block.user?.first_name} ${block.user?.last_name}`
 	}
@@ -234,10 +255,15 @@ export const Editor = () => {
 		css_library_open.set(true)
 	}
 
+	let close_css_library = () => {
+		css_library_open.set(false)
+	}
+
+
 	return html`
 		button.editor-toggle [onclick=${openEditor}] -- ${Icons.editor}
 		.css-library [ activated = ${css_library_open} ] 
-			button.close [onclick=${_ => css_library_open.set(false)}] -- [   X   ]
+			button.close [onclick=${close_css_library}] -- [   X   ]
 			a [href=https://www.are.na/channels/bootleg-mac-css-library]
 				button -- View on Are.na
 			each of ${css_library} as ${css_block}
@@ -245,7 +271,7 @@ export const Editor = () => {
 			button.close [onclick=${closeEditor}] -- [   X   ]
 			button [class = ${save_css_classes} onclick=${save_css}] -- ${save_text}
 			button.save-css [onclick=${copy_css}] -- [  Copy CSS  ]
-			button [onclick=${open_css_library}] -- [  Import CSS  ]
+			button [onclick=${open_css_library}] -- [  CSS Library  ]
 			br
 			.css-item-container
 				each of ${mem(() => Object.entries(css.StyleSheet))} as ${CssItem}
