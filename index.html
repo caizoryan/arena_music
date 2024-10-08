@@ -3,9 +3,155 @@
 
 <head>
 	<title>Bootleg Are.na Playlist</title>
-	<link rel="stylesheet" href="./editor.css">
 </head>
 <style>
+	@import url('https://fonts.googleapis.com/css2?family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap');
+
+	@font-face {
+		font-family: 'Departure';
+		src: url('./fonts/dep.otf') format('opentype');
+	}
+
+	@font-face {
+		font-family: 'Bi';
+		src: url('./fonts/bianzhidai_noBG/OTF/bianzhidai_noBG-Ring.otf') format('opentype');
+	}
+
+	#container {
+		display: none;
+	}
+
+	.debug-hovered {
+		border: 2px solid red !important;
+		cursor: crosshair;
+	}
+
+	.block:hover {
+		cursor: pointer;
+	}
+
+	.block:hover>* {
+		background-color: var(--light-background);
+	}
+
+	.hide {
+		opacity: 0;
+	}
+
+	.editor {
+		position: fixed;
+		top: 1em;
+		right: 1vw;
+		padding: 1em;
+		transform: translate3d(0, 100vw, 0);
+
+		width: 50vw;
+		height: 90vh;
+		background-color: var(--medium-background);
+		transition: all .2s ease-out;
+
+		font-family: "Roboto Mono", 'Departure', monospace;
+		z-index: 999999;
+	}
+
+	.editor[activated="true"] {
+		transform: translate3d(0, 0, 0);
+	}
+
+	.editor button {
+		padding: .1em;
+	}
+
+	.editor button.close {
+		position: absolute;
+		top: 1em;
+		right: 1em;
+	}
+
+	input.key-value {
+		width: 90%;
+		border: none;
+	}
+
+	input.key-value:focus {
+		border: 1px solid var(--light-primary);
+		outline: var(--background);
+	}
+
+	.css-item-container {
+		margin-top: 1em;
+		height: 65%;
+		overflow-y: scroll;
+		overflow-x: hidden;
+	}
+
+	.css-item {
+		padding: .5em;
+		background-color: var(--light-background);
+		margin-bottom: 1em;
+		width: 95%;
+		text-overflow: ellipsis;
+		overflow: hidden;
+	}
+
+	.css-item p,
+	.css-item span {
+		font-family: "Roboto Mono", monospace;
+	}
+
+	.css-item button {
+		margin-left: 1em;
+		padding: 0 1em;
+	}
+
+	.selector-item {
+		cursor: crosshair;
+	}
+
+	.show-selectors {
+		position: absolute;
+
+		bottom: 1em;
+		left: 1em;
+
+		height: 20%;
+		display: grid;
+
+		grid-gap: 1em;
+		grid-template-rows: 1fr 1fr;
+	}
+
+	.show-selectors p {
+		margin-bottom: 1em;
+	}
+
+	.rounded {
+		padding: .3em;
+		background-color: var(--light-background);
+		border-radius: 1em;
+		margin-right: 1em;
+		cursor: pointer;
+	}
+
+	.add-rule #debug-selected {
+		border: 2px solid red;
+		cursor: crosshair;
+	}
+
+	@keyframes hover {
+		0% {
+			opacity: 0;
+		}
+
+		50% {
+			opacity: 1;
+		}
+
+		100% {
+			opacity: 0;
+		}
+	}
+
 	.welcome {
 		padding: 0 2rem;
 	}
