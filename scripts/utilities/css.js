@@ -4,38 +4,8 @@ import { selector_item_class } from '../main.js'
 import { css_parse } from "../utilities/css_parser.js"
 
 export let css = mut({
-	StyleSheet: {
-		".block": {}
-	}
+	StyleSheet: {}
 })
-
-
-let default_css = `
-	:root {
-		/* -------------------- */
-		/* ---- Light MODE ----*/
-		/* -------------------- */
-		--primary: #111;
-		--secondary: #eee;
-
-		--light-primary: #444;
-		--medium-primary: #666;
-
-		--light-background: #aaa;
-		--medium-background: #ccc;
-
-		/* -------------------- */
-		/* ---- Dependent ----*/
-		/* -------------------- */
-		--background: var(--secondary);
-		--text: var(--primary);
-
-		--main-border: 1px solid var(--light-primary);
-		--dotted-border: 1px dotted var(--light-primary);
-	}
-
-`
-
 
 export let css_edited = sig(false)
 
@@ -176,8 +146,6 @@ export function load_css(str) {
 	Object.entries(cleaned).forEach(([selector, rules]) => {
 		if (!css.StyleSheet[selector]) css.StyleSheet[selector] = {}
 		Object.assign(css.StyleSheet[selector], rules)
-		console.log("loaded css: ", selector, rules)
-		console.log("css: ", css.StyleSheet)
 	})
 
 }
@@ -201,4 +169,3 @@ export let css_string = mem(() => {
 	return cssString
 })
 
-setTimeout(() => load_css(default_css), 1000)

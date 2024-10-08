@@ -36,73 +36,30 @@ export function create_draggable(draggable_elem) {
 		isDragging = false;
 	});
 }
-const Card = (text, open, classes) => {
-	let close = () => open.set(false)
-	let _class = mem(() => (open() ? "card open unselectable" : "card") + " " + classes)
+const Markdown = (file) => {
+	let markdown = sig("")
 
-	return html`
-		div [class=${_class} id=testy]
-		  button [onclick=${close}] -- [Close]
-			div -- ${MD(text)} 
-		`
-}
-
-const what_is_this = () => {
-	let open = sig(false)
-	let toggleEditor = () => open.set(!open())
-
-	let card = sig("")
-
-	fetch("./pages/what-is-this.md")
+	fetch("./pages/" + file)
 		.then((res) => res.text())
-		.then((res) => card.set(Card(res, open, "one")))
+		.then((res) => markdown.set(MD(res)))
 
 
 	return html`
-		div -- ${card}
-		h4.pointer [onclick=${toggleEditor}] -- What is this?
+		div -- ${markdown}
 `
-}
-
-const how_do_i_make_a_playlist = () => {
-	let open = sig(false)
-	let toggleEditor = () => open.set(!open())
-
-	let card = sig("")
-
-	fetch("./pages/how-do-i-make-a-playlist.md")
-		.then((res) => res.text())
-		.then((res) => card.set(Card(res, open, "two")))
-
-	return html`
-		div -- ${card}
-		h4.pointer [onclick=${toggleEditor}] -- How do I make a playlist?
-	`
 }
 
 const search_open = sig(true)
 
-
 export const Home = () => {
 	return html`
-		.channel
-			.header
-					.title -- (Welcome Page) Bootleg Are.na Playlist 
-				a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
-					button -- [ Download Source ]
+			h1 -- (Welcome Page) Bootleg Are.na Playlist 
+			a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
+				button -- [ Download Source ]
 			div -- ${() => SearchBar(search_open)}
 			.intro
 				.faq
 					h2 -- FAQ
-					ul
-						li -- ${what_is_this}
-						li -- ${how_do_i_make_a_playlist}
-						li
-							h4.pointer -- How do I CSS this playlist?
-						li	
-							h4 -- TIPS, TRICKS and Miscellaneous
-							br
-							p.pointer -- CSS Cookbook
-							p.pointer -- Evading Youtube Ads
-							p.pointer -- Notes on Alternative Media Economies`
+					div -- ${Markdown("faq.md")}
+							`
 }

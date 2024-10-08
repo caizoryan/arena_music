@@ -30,6 +30,7 @@ function CssItem([selector, rules]) {
 		if (key === Config.default_property && value === Config.default_value) _value = `\n`
 
 		function onkeydown(e) {
+			e.stopPropagation()
 			if (e.key === "Enter") {
 				let santised = sanitise_css(e.target.value)
 				if (emptyEntry(santised)) deleteEntry()
@@ -87,6 +88,7 @@ function CssItem([selector, rules]) {
 
 
 	function onkeydown(e) {
+		e.stopPropagation()
 		if (e.key === "Enter") {
 			edit_css_selector(selector, e.target.value)
 			editSelectorToggle()

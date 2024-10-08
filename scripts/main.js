@@ -64,38 +64,47 @@ export const Icons = {
 }
 
 // Defaults
-export let channel_slug = sig("")
-export let selected_classes = sig([])
-export let selected_ids = sig([])
+export const channel_slug = sig("")
+export const selected_classes = sig([])
+export const selected_ids = sig([])
 
-let channel_title = sig("")
-let debug = sig(false)
+const channel_title = sig("")
+const debug = sig(false)
+
+const contents_raw = sig([])
+const channel = mut({ contents: [] })
+
+export const selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
+const playing = mem(() => channel.contents.find((block) => { if (block?.playing) return block.playing() === true }))
 let dispatchedRefresh = false
-
-let contents_raw = sig([])
-let channel = mut({ contents: [] })
-
-export let selector_item_class = (selector) => "selector-for-" + selector.replace(".", "__").replace(" ", "---").replace("#", "-x--") + " selector-item"
-
 
 
 // Dependent data
 let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
-let css_block = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "style.css" && block.class === "Text"))
+let css_blocks = mem(() => contents_raw().filter((block) => {
+	let split = block.title.toLowerCase().split(".")
+	let end = split[split.length - 1]
+	return end === "css" && block.class === "Text"
+}))
 
 let cover_image = mem(() => cover()?.image?.display.url)
 
 // -----------
 // Effects
 // -----------
-eff_on(css_block, () => {
-	if (!css_block()) return
-	let content = css_block()?.content
-	if (!content) return
-	load_css(content)
+eff_on(css_blocks, () => {
+
+	if (!css_blocks()) return
+	css_blocks().forEach((css_block) => {
+		let content = css_block?.content
+		console.log("loading css")
+		if (!content) return
+		console.log("Cocnten", content)
+		load_css(content)
+	})
 	// give priority to the local css, write on top
 	let local_css = localStorage.getItem(channel_slug())
-	if (load_css) load_css(local_css)
+	if (local_css) load_css(local_css)
 })
 
 eff_on(contents_raw, () => {
@@ -181,6 +190,30 @@ function playPlayer(url, onStart, onProgress, onDuration, onEnded) {
 
 //
 // ------------------------
+// Music Controller
+// ------------------------
+const PlayerControls = {
+	playing: playing,
+	title: mem(() => playing()?.title),
+	current: mem(() => playing()?.current),
+	duration: mem(() => playing()?.duration),
+	percent: mem(() => playing()?.percentDone()),
+
+
+	pause: () => playing()?.handle_pause(),
+	play: () => playing() ? playing().handle_play() : (channel.contents[0].handle_play()),
+	next: () => find_next_and_play(playing()?.id),
+	previous: () => find_previous_and_play(playing()?.id)
+}
+
+eff_on(PlayerControls.playing, () => {
+	if (PlayerControls.title()) { document.title = PlayerControls.title(); dispatchedRefresh === false }
+	else document.title = "Bootleg Are.na playlist: " + channel_title()
+})
+
+
+//
+// ------------------------
 // View
 // ------------------------
 
@@ -220,16 +253,10 @@ const Unplayable = () => html`
 		.metadata
 			span -- Unplayable`
 
-
-
-const Block = (block) => {
+function create_block_player(block) {
 	let url = getURL(block)
+	// TODO : should return unplayable in parent func not here
 	if (!url) return Unplayable
-
-	let image = block?.image?.thumb.url
-	if (!image) {
-		image = cover_image()
-	}
 
 	let d = "-"
 	let duration = sig(d)
@@ -238,8 +265,7 @@ const Block = (block) => {
 	let loading = sig(false)
 	let percentDone = sig(0)
 	let durationRaw = sig(0)
-	let isLoading = mem(() => loading() === true)
-	let notLoading = mem(() => loading() === false)
+
 
 	let onprogress = (t) => {
 		let totalSeconds = parseInt(t.playedSeconds)
@@ -301,107 +327,103 @@ const Block = (block) => {
 		}
 	}
 
+	return {
+		handle_play,
+		handle_pause,
+		handle_toggle,
+
+		playing,
+		duration,
+		current,
+		percentDone,
+		loading,
+
+		onduration,
+		onprogress,
+		onended,
+		onstart,
+	}
+}
+
+const Block = (block) => {
+
+	let image = block?.image?.thumb.url
+	if (!image) {
+		image = cover_image()
+	}
+
+	let block_player = create_block_player(block)
+
 	// ------------------------
 	// set the block's functions
 	// so they are globally accessible
 	// ------------------------
+	Object.assign(block, block_player)
 
-	block.handle_play = handle_play
-	block.handle_pause = handle_pause
-	block.playing = playing
-	block.duration = duration
-	block.current = current
-	block.percentDone = percentDone
-
+	let isLoading = mem(() => block.loading() === true)
+	let notLoading = mem(() => block.loading() === false)
 	let _class = mem(() => "block block-" + block.class + " " + (block.playing() ? "playing" : ""))
 
 	return html`
 	div [
-			onclick=${handle_toggle}
+			onclick=${block.handle_toggle}
 			class = ${_class}
 			id = ${"block-" + block.id}]
 
 		img.thumb-image [src=${image}]
 		span.metadata
 			when ${isLoading} then ${() => html`span.loading -- Loading...`}
-			when ${playing} then ${() => html`span.playing -- (▶)`}
+			when ${block.playing} then ${() => html`span.playing -- (▶)`}
 			when ${notLoading} then ${() => html`span.title -- ${" " + block?.title} `}
 	`
 }
 
-const playing = mem(() => channel.contents.find((block) => { if (block?.playing) return block.playing() === true }))
-
-const Controller = {
-	playing: playing,
-	title: mem(() => playing()?.title),
-	current: mem(() => playing()?.current),
-	duration: mem(() => playing()?.duration),
-	percent: mem(() => playing()?.percentDone()),
-
-
-	pause: () => playing()?.handle_pause(),
-	play: () => playing() ? playing().handle_play() : (channel.contents[0].handle_play()),
-	next: () => find_next_and_play(playing()?.id),
-	previous: () => find_previous_and_play(playing()?.id)
-}
-
-eff_on(Controller.playing, () => {
-	if (Controller.title()) { document.title = Controller.title(); dispatchedRefresh === false }
-	else document.title = "Bootleg Are.na playlist: " + channel_title()
-})
 
 const Player = () => {
-	let isPlaying = mem(() => Controller.playing())
-	let isNotPlaying = mem(() => !Controller.playing())
+	let isPlaying = mem(() => PlayerControls.playing())
+	let isNotPlaying = mem(() => !PlayerControls.playing())
 
-	let hideStyle = mem(() => Controller.playing() ? "transform: translateY(0); opacity: 1;" : "transform: translateY(400%); opacity: 0;")
-
+	let hide = mem(() => PlayerControls.playing() ? "transform: translateY(0); opacity: 1;" : "transform: translateY(400%); opacity: 0;")
 
 	let loaded = mem(() => {
-		if (Controller.percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
-			console.log("refreshing")
+		if (PlayerControls.percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
 			refresh_contents(channel_slug())
 		}
 
-		return loaderString(Controller.percent(), 35)
+		return loaderString(PlayerControls.percent(), 35)
 	})
 
-	let fn = () => html`
+	return html`
 		.player 
 			.controls 
-					button [onclick=${Controller.previous}] -- ${Icons.prev}
+					button.prev [onclick=${PlayerControls.previous}] -- ${Icons.prev}
 
 					when ${isPlaying} 
-					then ${html`button [onclick=${Controller.pause}] -- ${Icons.pause}`}
+					then ${html`button.pause [onclick=${PlayerControls.pause}] -- ${Icons.pause}`}
 
 					when ${isNotPlaying}
-					then ${html`button [onclick=${Controller.play}] -- ${Icons.play}`}
+					then ${html`button.play [onclick=${PlayerControls.play}] -- ${Icons.play}`}
 
-					button [onclick=${Controller.next}] -- ${Icons.next} 
-			.meta [style=${hideStyle}]
-				.song-title -- ${Controller.title}
-				.duration -- ${Controller.current} ${loaded} ${Controller.duration}
+					button.next [onclick=${PlayerControls.next}] -- ${Icons.next} 
+			.metadata [style=${hide}]
+				.song-title -- ${PlayerControls.title}
+				.duration -- ${PlayerControls.current} ${loaded} ${PlayerControls.duration}
 	`
 
 
-	return fn
 }
-
-let PlayerInstance = Player()
-
 
 const Channel = () => html`
 	style -- ${css_string}
-	div -- ${PlayerInstance}
+	div -- ${Player}
 	div -- ${Editor}
-	.channel
-		.header
-			h1.title#channel-header -- ${channel_title}
-		.list
-			each of ${_ => channel.contents} as ${Block}
+	h1#channel-header -- ${channel_title}
+	.track-list
+		each of ${_ => channel.contents} as ${Block}
 	`
 
 const Main = () => html`
+	style -- ${css_string}
 	when ${mem(() => channel_slug() === "")} then ${Home}
 	when ${mem(() => channel_slug() !== "")} then ${Channel}
 	
@@ -417,9 +439,6 @@ setTimeout(() => {
 			selected_classes.set(e.target.className.split(" "))
 			selected_ids.set(e.target.id.split(" "))
 			e.target.classList.add("debug-hovered")
-
-			// e.target.style.cursor = "crosshair"
-			// e.target.style.border = "1px solid red"
 		}
 	}
 
@@ -440,7 +459,7 @@ setTimeout(() => {
 
 window.onload = () => {
 	init();
-
+	load_css(default_css)
 	let str = localStorage.getItem(channel_slug())
 	if (str) load_css(str)
 	console.log("loaded css")
@@ -449,18 +468,21 @@ window.onload = () => {
 		// or operator js is: ||
 		if (e.key === "Control" || e.key === "Meta") {
 			debug.set(true)
-			console.log("debugging")
 		}
 		if (e.key === " ") {
-			Controller.playing() ? Controller.pause() : Controller.play()
+			if (e.target !== document.body) return
+			e.preventDefault()
+			PlayerControls.playing() ? PlayerControls.pause() : PlayerControls.play()
 		}
 
 		if (e.key === "N") {
-			find_next_and_play(Controller.playing().id)
+			if (e.target !== document.body) return
+			find_next_and_play(PlayerControls.playing().id)
 		}
 
 		if (e.key === "P") {
-			find_previous_and_play(Controller.playing().id)
+			if (e.target !== document.body) return
+			find_previous_and_play(PlayerControls.playing().id)
 		}
 
 	})
@@ -475,3 +497,74 @@ window.onload = () => {
 	})
 }
 
+
+let default_css = `
+	:root {
+		/* -------------------- */
+		/* ---- Light MODE ----*/
+		/* -------------------- */
+		--primary: #111;
+		--secondary: #eee;
+
+		--light-primary: #444;
+		--medium-primary: #666;
+
+		--light-background: #aaa;
+		--medium-background: #ccc;
+		--accent: #f00;
+
+		/* -------------------- */
+		/* ---- Dependent ----*/
+		/* -------------------- */
+		--background: var(--secondary);
+		--text: var(--primary);
+
+		--main-border: 1px solid var(--light-primary);
+		--dotted-border: 1px dotted var(--light-primary);
+	}
+
+	* {
+		font-family: 'Departure', monospace;
+		color: var(--text);
+	}
+
+	body {
+		background-color: var(--background);
+	}
+
+	input {
+		all: unset;
+		border: var(--main-border);
+		width: min-content;
+	}
+
+	button {
+		background-color: var(--light-background)
+	}
+
+	p {
+		margin: .3em;
+	}
+
+	button.editor-toggle {
+		position: fixed;
+		top: 1em;
+		right: 1em;
+	}
+
+	.thumb-image {
+		width: 50px;
+	}
+
+	.block.playing .title {
+		background-color: var(--text);
+		color: var(--background);
+	}
+
+	.loading {
+		background-color: var(--text);
+		color: var(--background);
+		animation: hover 1s infinite;
+
+	}
+`
