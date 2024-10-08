@@ -51,7 +51,6 @@ export function SearchBar(open) {
 		if (e.key === "Enter") page("/" + results()[0].slug)
 	}
 
-	let classes = mem(() => (open() ? "search-bar open" : "search-bar"))
 	let placeholder = "search channel or paste link (search is buggy, pasting works best)"
 
 	let result = (channel) => html`
@@ -60,7 +59,6 @@ export function SearchBar(open) {
 `
 
 	return html`
-		div [class=${classes}]
 			input.search [ oninput=${onInput} onkeydown=${onKeydown} placeholder=${placeholder} ]
 			.search-results
 				each of ${results} as ${result}
