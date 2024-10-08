@@ -21,6 +21,7 @@
 		display: none;
 	}
 
+
 	.debug-hovered {
 		border: 2px solid red !important;
 		cursor: crosshair;
@@ -51,10 +52,46 @@
 		transition: all .2s ease-out;
 
 		font-family: "Roboto Mono", 'Departure', monospace;
-		z-index: 999999;
+		z-index: 998;
 	}
 
 	.editor[activated="true"] {
+		transform: translate3d(0, 0, 0);
+	}
+
+	.css-library {
+		position: fixed;
+		top: 1em;
+		right: 1vw;
+		padding: 1em;
+		transform: translate3d(0, 100vw, 0);
+		overflow-y: scroll;
+
+		background-color: var(--background);
+		transition: all .2s ease-out;
+
+		width: 400px;
+		height: 90vh;
+
+		font-family: "Roboto Mono", 'Departure', monospace;
+		z-index: 999;
+	}
+
+	.css-block {
+		width: 95%;
+		height: 300px;
+		padding: 2.5%;
+		box-shadow: inset 0 0 10px var(--light-primary);
+		text-wrap: ellipsis;
+		overflow: hidden;
+	}
+
+	.css-block:hover {
+		cursor: pointer;
+	}
+
+
+	.css-library[activated="true"] {
 		transform: translate3d(0, 0, 0);
 	}
 

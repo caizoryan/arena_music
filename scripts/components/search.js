@@ -1,4 +1,4 @@
-import { eff_on, html, sig, mem } from "../libraries/solid_monke/solid_monke.js"
+import { eff_on, html, sig } from "../libraries/solid_monke/solid_monke.js"
 import page from "../utilities/page.js"
 
 async function search(query) {
@@ -31,6 +31,7 @@ export function SearchBar(open) {
 	}
 
 	const cursor = sig(0)
+
 	const cursor_next = () => {
 		if (cursor() < results().length - 1) cursor.set(cursor() + 1)
 		else cursor.set(0)
@@ -51,12 +52,13 @@ export function SearchBar(open) {
 		if (e.key === "Enter") page("/" + results()[0].slug)
 	}
 
-	let placeholder = "search channel or paste link (search is buggy, pasting works best)"
+	let placeholder = "paste channel link or search channel"
 
-	let result = (channel) => html`
-	div
-		button [onclick=${() => page("/" + channel.slug)}] -- ${channel.title}
-`
+	let result = (channel) => {
+		return html`
+			div
+				button [onclick=${() => page("/" + channel.slug)}] -- ${channel.title}`
+	}
 
 	return html`
 			input.search [ oninput=${onInput} onkeydown=${onKeydown} placeholder=${placeholder} ]
