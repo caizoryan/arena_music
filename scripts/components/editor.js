@@ -224,14 +224,23 @@ export const Editor = () => {
 
 
 	const css_block = (block) => {
-
 		let css_temp = temporary_css_applier(block.content)
+		let timeout = undefined
+		let still_hovering = false
 
 		const onmouseover = (e) => {
-			css_temp?.apply()
+			still_hovering = true
+			if (timeout) clearTimeout(timeout)
+			timeout = setTimeout(() => {
+				if (still_hovering) {
+					css_temp?.apply()
+				}
+			}, 300)
 		}
 
 		const onmouseleave = (e) => {
+			still_hovering = false
+			clearTimeout(timeout)
 			css_temp?.revert()
 		}
 
@@ -266,7 +275,11 @@ export const Editor = () => {
 			button.close [onclick=${close_css_library}] -- [   X   ]
 			a [href=https://www.are.na/channels/bootleg-mac-css-library]
 				button -- View on Are.na
-			each of ${css_library} as ${css_block}
+			.css-block-container
+				p -- -------------------
+				p -- Hover to preview, click to apply
+				p -- -------------------
+				each of ${css_library} as ${css_block}
 		.editor [ activated = ${open} ] 
 			button.close [onclick=${closeEditor}] -- [   X   ]
 			button [class = ${save_css_classes} onclick=${save_css}] -- ${save_text}

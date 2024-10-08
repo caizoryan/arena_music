@@ -66,7 +66,6 @@
 		right: 2vw;
 		padding: 1em;
 		transform: translate3d(0, 100vh, 0);
-		overflow-y: scroll;
 
 		background-color: var(--background);
 		transition: transform .2s ease-out;
@@ -74,8 +73,29 @@
 		width: 400px;
 		height: 80vh;
 
+		box-shadow: 0 0 10px var(--light-primary);
+
 		font-family: "Roboto Mono", 'Departure', monospace;
 		z-index: 999;
+	}
+
+	.css-block-container {
+		overflow-y: scroll;
+		height: 94%;
+	}
+
+	.css-block:nth-of-type(1) {
+		margin-top: 1em;
+	}
+
+	.side {
+		position: relative;
+	}
+
+	.end {
+		position: absolute;
+		left: 0;
+		bottom: 1em;
 	}
 
 	.css-block {
