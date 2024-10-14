@@ -108,7 +108,7 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel")
 	// filtered = filtered.sort((a, b) => b.position - a.position)
 	channel.contents = filtered
 })
@@ -351,6 +351,10 @@ const Block = (block) => {
 	if (!image) {
 		image = cover_image()
 	}
+
+	if (block.class === "Channel") return html`
+div.block.channel
+	button.block.channel [onclick=${() => page("/" + block.slug)}] -- ${block.title}`
 
 	let block_player = create_block_player(block)
 
