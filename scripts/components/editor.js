@@ -222,39 +222,34 @@ export const Editor = () => {
 	}
 
 
-
 	const css_block = (block) => {
 		let css_temp = temporary_css_applier(block.content)
-		let timeout = undefined
-		let still_hovering = false
 
-		const onmouseover = (e) => {
-			still_hovering = true
-			if (timeout) clearTimeout(timeout)
-			timeout = setTimeout(() => {
-				if (still_hovering) { css_temp?.apply() }
-				else { timeout = undefined; still_hovering = false }
-			}, 300)
-		}
+		let previewed = sig(false)
+		let applied = sig(false)
 
-		const onmouseleave = (e) => {
-			still_hovering = false
-			clearTimeout(timeout)
-			css_temp?.revert()
-		}
+		let not_applied = mem(() => !applied())
+		let is_applied = mem(() => applied())
 
-		const onclick = (e) => {
-			css_temp = undefined
-			load_block_to_css(block)
-		}
+		let is_previewed = mem(() => previewed() && !applied())
+		let not_previewed = mem(() => !previewed() && !applied())
+
+
+		const apply = _ => { applied.set(true); load_block_to_css(block) }
+
+		const preview = _ => { previewed.set(true); css_temp.apply() }
+		const revert = _ => { previewed.set(false); css_temp.revert() }
 
 		if (block.class === "Text") return html`
 			.css-block [
-				onclick=${onclick} 
-				onmouseenter=${onmouseover}
-				onmouseleave=${onmouseleave} ]
-				span --${MD(block.content)}
-			p -- ${block.title} by ${block.user?.first_name} ${block.user?.last_name}`
+				onclick=${onclick} ]
+				span -- ${MD(block.content)}
+			p -- ${block.title} by ${block.user?.first_name} ${block.user?.last_name}
+			when ${not_previewed} then ${html`button [onclick=${preview}] -- Preview`}
+			when ${is_previewed} then ${html`button [onclick=${revert}] -- Revert`}
+			when ${not_applied} then ${html` button [onclick=${apply}] -- Apply `}
+			when ${is_applied} then ${html`p -- -> Applied <-`}
+`
 	}
 
 

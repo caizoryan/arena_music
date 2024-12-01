@@ -151,13 +151,14 @@ export function load_css(str) {
 }
 
 export const temporary_css_applier = (str) => {
-	let old
+	let old;
 	let apply = () => {
 		old = JSON.parse(JSON.stringify(css.StyleSheet))
 		load_css(str)
 	}
 
 	let revert = () => {
+		if (!old) return
 		console.log("reverting")
 		if (old) css.StyleSheet = old
 	}

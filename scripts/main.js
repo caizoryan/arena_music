@@ -30,8 +30,16 @@ function getURL(item) {
 // ------------------------
 
 const init = () => {
-	page("/", () => { channel_slug.set("") });
-	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
+	page("/", () => {
+		channel_slug.set("")
+	});
+	page("/:slug", (ctx) => {
+		channel_slug.set(ctx.params.slug);
+		load_css(default_css)
+		let str = localStorage.getItem(channel_slug())
+		if (str) load_css(str)
+		console.log("loaded css")
+	});
 	page({ hashbang: true });
 };
 
@@ -110,7 +118,7 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel")
 	// filtered = filtered.sort((a, b) => b.position - a.position)
 	channel.contents = filtered
 })
@@ -354,6 +362,10 @@ const Block = (block) => {
 		image = cover_image()
 	}
 
+	if (block.class === "Channel") return html`
+		div.block.channel
+			button.block.channel [onclick=${() => page("/" + block.slug)}] -- ${block.title}`
+
 	let block_player = create_block_player(block)
 
 	// ------------------------
@@ -533,10 +545,6 @@ let default_css = `
 		--dotted-border: 1px dotted var(--light-primary);
 	}
 
-	* {
-		font-family: 'Departure', monospace;
-		color: var(--text);
-	}
 
 	body {
 		background-color: var(--background);
