@@ -1,4 +1,4 @@
-import { render, html, mut, sig, mem, eff_on } from './libraries/solid_monke/solid_monke.js'
+import { render, html, mut, sig, mem, eff_on, mounted } from './libraries/solid_monke/solid_monke.js'
 import { tinyApi } from './utilities/arena.js'
 import { Editor } from './components/editor.js';
 import player from "./utilities/player.js"
@@ -63,6 +63,7 @@ export const Icons = {
 	loadingBarEnd: "]",
 }
 
+
 // Defaults
 export const channel_slug = sig("")
 export const selected_classes = sig([])
@@ -86,6 +87,7 @@ let css_blocks = mem(() => contents_raw().filter((block) => {
 	let end = split[split.length - 1]
 	return end === "css" && block.class === "Text"
 }))
+
 
 let cover_image = mem(() => cover()?.image?.display.url)
 
@@ -413,14 +415,22 @@ const Player = () => {
 
 }
 
-const Channel = () => html`
-	style -- ${css_string}
-	div -- ${Player}
-	div -- ${Editor}
-	h1#channel-header -- ${channel_title}
-	.track-list
-		each of ${_ => channel.contents} as ${Block}
-	`
+const Channel = () => {
+	mounted(() => {
+
+		load_css(default_css)
+		let str = localStorage.getItem(channel_slug())
+		if (str) load_css(str)
+		console.log("loaded css")
+	})
+	return html`
+		style -- ${css_string}
+		div -- ${Player}
+		div -- ${Editor}
+		h1#channel-header -- ${channel_title}
+		.track-list
+			each of ${_ => channel.contents} as ${Block}
+`}
 
 const Main = () => html`
 	style -- ${css_string}

@@ -1,9 +1,8 @@
-let auth = ""
 let host = "https://api.are.na/v2/";
 
 
 // API functions
-const get_channel = async (slug) => {
+const get_channel = async (slug, auth) => {
 	return await fetch(host + `channels/${slug}?per=100&force=true`, {
 		headers: {
 			Authorization: `Bearer ${auth}`,
@@ -158,7 +157,20 @@ const get_comments = async (block_id) => {
 	return comments;
 };
 
+const get_group_channels = async (slug, auth) => {
+	return fetch("https://api.are.na/v2/groups/" + slug + "/channels?per=100&sort=position&direction=desc", {
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: "Bearer " + auth,
+		},
+		method: "GET",
+	})
+		.then((res) => res.json())
+		.then((res) => res)
+}
+
 
 export let tinyApi = {
-	get_channel
+	get_channel,
+	get_group_channels
 }

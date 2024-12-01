@@ -232,9 +232,8 @@ export const Editor = () => {
 			still_hovering = true
 			if (timeout) clearTimeout(timeout)
 			timeout = setTimeout(() => {
-				if (still_hovering) {
-					css_temp?.apply()
-				}
+				if (still_hovering) { css_temp?.apply() }
+				else { timeout = undefined; still_hovering = false }
 			}, 300)
 		}
 

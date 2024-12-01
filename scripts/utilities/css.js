@@ -151,7 +151,7 @@ export function load_css(str) {
 }
 
 export const temporary_css_applier = (str) => {
-	let old = JSON.parse(JSON.stringify(css.StyleSheet))
+	let old
 	let apply = () => {
 		old = JSON.parse(JSON.stringify(css.StyleSheet))
 		load_css(str)
@@ -159,7 +159,7 @@ export const temporary_css_applier = (str) => {
 
 	let revert = () => {
 		console.log("reverting")
-		css.StyleSheet = old
+		if (old) css.StyleSheet = old
 	}
 
 	return { apply, revert }
