@@ -29,12 +29,25 @@ tinyApi.get_channel("playlists-my-friends-made").then((res) => {
 	})
 })
 
-let group_channels = sig([])
+let group_channels_raw = sig([])
+let group_channels_grouped = mem(() => {
+	let grouped = {}
+	group_channels_raw().forEach((block) => {
+		let first = block.title.split(" ")[0].toLowerCase()
+
+		if (grouped[first] === undefined) {
+			grouped[first] = []
+		}
+
+		grouped[first].push(block)
+	})
+	return Object.entries(grouped)
+})
 
 if (parent_group() !== null) {
 	tinyApi.get_group_channels(parent_group(), auth_token()).then((res) => {
 		res.channels.forEach((block) => {
-			group_channels.set([...group_channels(), block])
+			group_channels_raw.set([...group_channels_raw(), block])
 		})
 	})
 }
@@ -112,6 +125,7 @@ export const Home = () => {
 			h1 -- (Welcome Page) Bootleg Are.na Playlist 
 			a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
 				button -- [ Download Source ]
+
 		.home
 			.side
 				div -- ${() => SearchBar(search_open)}
@@ -125,15 +139,25 @@ export const Home = () => {
 					p -- Playlists my friends made!
 					each of ${friends_playlists()} as ${playlist_btn}
 			.intro 
-				when ${mem(() => group_channels().length == 0)}
+				when ${mem(() => group_channels_raw().length == 0)}
 				then ${FAQ}
 				
-				when ${mem(() => group_channels().length > 0)}
+				when ${mem(() => group_channels_raw().length > 0)}
 				then ${() => html`
 					.group-container
-						each of ${group_channels()} as ${Channel}
+						each of ${group_channels_grouped} as ${ChannelContainer}
 				`}
 				
+		`
+}
+
+const ChannelContainer = ([group, channels]) => {
+	let open = sig(false)
+	return html`
+		div.group [onclick=${() => open.set(!open())}]
+			h3 -- ${group}
+			when ${open}
+			then ${html` each of ${channels} as ${Channel} `}
 		`
 }
 
