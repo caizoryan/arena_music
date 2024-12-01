@@ -31,7 +31,13 @@ function getURL(item) {
 
 const init = () => {
 	page("/", () => { channel_slug.set("") });
-	page("/:slug", (ctx) => { channel_slug.set(ctx.params.slug) });
+	page("/:slug", (ctx) => {
+		channel_slug.set(ctx.params.slug)
+		load_css(default_css)
+		let str = localStorage.getItem(channel_slug())
+		if (str) load_css(str)
+		console.log("loaded css")
+	});
 	page({ hashbang: true });
 };
 
@@ -110,9 +116,15 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment")
+	console.log("contents_raw", contents_raw())
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel")
 	// filtered = filtered.sort((a, b) => b.position - a.position)
 	channel.contents = filtered
+	channel.contents.forEach((block) => {
+		if (block.class === "Channel") {
+			console.log("channel", block)
+		}
+	})
 })
 
 // init
@@ -348,6 +360,9 @@ function create_block_player(block) {
 }
 
 const Block = (block) => {
+	if (block.class === "Channel") {
+		return html`button.channel [onclick=${() => page("/" + block.slug)}] -- ${block.title}`
+	}
 
 	let image = block?.image?.thumb.url
 	if (!image) {
@@ -416,13 +431,6 @@ const Player = () => {
 }
 
 const Channel = () => {
-	mounted(() => {
-
-		load_css(default_css)
-		let str = localStorage.getItem(channel_slug())
-		if (str) load_css(str)
-		console.log("loaded css")
-	})
 	return html`
 		style -- ${css_string}
 		div -- ${Player}
