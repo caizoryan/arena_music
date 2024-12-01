@@ -2,6 +2,7 @@ import { mem, html, sig } from '../libraries/solid_monke/solid_monke.js'
 import { tinyApi } from '../utilities/arena.js';
 import { MD } from '../utilities/md.js';
 import { SearchBar } from './search.js';
+import { create_channel_click, set_mixer_slug } from '../main.js';
 import page from "../utilities/page.js"
 
 export let auth_token = () => localStorage.getItem("token")
@@ -117,27 +118,39 @@ export const ParentGroup = () => {
 const FAQ = Markdown("faq.md")
 
 export const Home = () => {
-	let playlist_btn = (channel) => html`
-				button [onclick=${() => page("/" + channel.slug)}] -- ${channel.title}`
+	let settings_open = sig(false)
+
+	let settings = () => html`
+				div
+					h4 -- Auth Token
+					div -- ${authenticator}
+
+				div
+					h4 -- Parent Group
+					div -- ${ParentGroup}
+	`
+
+	let settings_class = mem(() => {
+		if (settings_open()) {
+			return "settings"
+		}
+		else {
+			return "settings close"
+		}
+	})
 
 	return html`
+		.settings [class=${settings_class}] -- ${settings}
 		.welcome
-			h1 -- (Welcome Page) Bootleg Are.na Playlist 
+			h1 -- Bootleg Are.na Player 
 			a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
 				button -- [ Download Source ]
+			button [onclick=${() => settings_open.set(!settings_open())}] -- [ Settings ]
 
 		.home
 			.side
 				div -- ${() => SearchBar(search_open)}
-				h4.mt-1 -- Auth Token
-				div -- ${authenticator}
 
-				h4.mt-1 -- Parent Group
-				div -- ${ParentGroup}
-
-				.end
-					p -- Playlists my friends made!
-					each of ${friends_playlists()} as ${playlist_btn}
 			.intro 
 				when ${mem(() => group_channels_raw().length == 0)}
 				then ${FAQ}
@@ -155,7 +168,7 @@ const ChannelContainer = ([group, channels]) => {
 	let open = sig(false)
 	return html`
 		div.group [onclick=${() => open.set(!open())}]
-			h3 -- ${group}
+			h3.title -- ${group}
 			when ${open}
 			then ${html` each of ${channels} as ${Channel} `}
 		`
@@ -165,8 +178,9 @@ const Channel = (channel) => {
 	let slug = channel.slug
 	let title = channel.title
 
+	let click = create_channel_click(slug)
 	return html`
-		div.channel [onclick=${() => page("/" + slug)}]
+		div.channel [onclick=${click}]
 			span -- ${title}
 		`
 }

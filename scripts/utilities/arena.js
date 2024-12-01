@@ -93,16 +93,15 @@ const update_block = (block_id, body, slug, fuck = false) => {
 	});
 };
 
-const connect_block = async (slug, id) => {
-	return await fetch(host + "channels/" + slug + "/connections", {
+const connect_block = async (channel_slug, block_id, auth) => {
+	return await fetch(host + "channels/" + channel_slug + "/connections", {
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: "Bearer " + auth,
 		},
 		method: "POST",
-		body: '{"connectable_id":"' + id + '","connectable_type":"Block"}',
+		body: '{"connectable_id":"' + block_id + '","connectable_type":"Block"}',
 	}).then((res) => {
-		refresh_journal(slug);
 		let r = res.json();
 		return r;
 	});
@@ -172,5 +171,6 @@ const get_group_channels = async (slug, auth) => {
 
 export let tinyApi = {
 	get_channel,
-	get_group_channels
+	get_group_channels,
+	connect_block,
 }

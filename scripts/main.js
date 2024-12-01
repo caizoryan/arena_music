@@ -74,6 +74,10 @@ export const Icons = {
 export const channel_slug = sig("")
 export const selected_classes = sig([])
 export const selected_ids = sig([])
+export let set_mixer_slug
+export const buffer = sig({})
+const potential_buffer = sig({})
+let paste_buffer
 
 const channel_title = sig("")
 const debug = sig(false)
@@ -149,6 +153,17 @@ function refresh_contents(slug) {
 
 }
 
+export function create_channel_click(slug) {
+	return (e) => {
+		if (e.shiftKey) {
+			set_mixer_slug(slug)
+		}
+		else {
+			page("/" + slug)
+		}
+	}
+}
+
 function find_next(id) {
 	// find the index of the current block
 	let index = channel.contents.findIndex((block) => block.id === id)
@@ -222,7 +237,7 @@ const PlayerControls = {
 
 eff_on(PlayerControls.playing, () => {
 	if (PlayerControls.title()) { document.title = PlayerControls.title(); dispatchedRefresh === false }
-	else document.title = "Bootleg Are.na playlist: " + channel_title()
+	else document.title = "Are.na Player — " + channel_title()
 })
 
 
@@ -361,7 +376,8 @@ function create_block_player(block) {
 
 const Block = (block) => {
 	if (block.class === "Channel") {
-		return html`button.channel [onclick=${() => page("/" + block.slug)}] -- ${block.title}`
+		let click = create_channel_click(block.slug)
+		return html`button.channel [onclick=${click}] -- ${block.title}`
 	}
 
 	let image = block?.image?.thumb.url
@@ -376,16 +392,28 @@ const Block = (block) => {
 	// so they are globally accessible
 	// ------------------------
 	Object.assign(block, block_player)
+	// ------------------------
+	// fix this, this is a hack... when block is an image or something
+	// it wont assign the functions
+	if (!block.loading) return
 
 	let isLoading = mem(() => block.loading() === true)
 	let notLoading = mem(() => block.loading() === false)
 	let _class = mem(() => "block block-" + block.class + " " + (block.playing() ? "playing" : ""))
+	let onmouseenter = (e) => {
+		potential_buffer.set(block)
+	}
+	let onmouseleave = (e) => {
+		potential_buffer.set({})
+	}
 
 	return html`
 	div [
 			onclick=${block.handle_toggle}
 			class = ${_class}
-			id = ${"block-" + block.id}]
+			id = ${"block-" + block.id}
+			onmouseenter=${onmouseenter}
+			onmouseleave=${onmouseleave} ]
 
 		img.thumb-image [src=${image}]
 		span.metadata
@@ -430,6 +458,69 @@ const Player = () => {
 
 }
 
+const Mixer = () => {
+	let open = sig(false)
+	let active = sig(false)
+	let _class = mem(() => {
+		let ret = "multi-player"
+		if (!open()) ret += " close"
+		if (active()) ret += " active"
+		return ret
+	})
+
+	let multislug = sig("")
+	let contents = sig([])
+
+	set_mixer_slug = (slug) => { multislug.set(slug); open.set(true) }
+	paste_buffer = () => {
+		if (!active()) return
+
+		let block_id = buffer().id
+		let channel_slug = multislug()
+
+		console.log("connecting", channel_slug, block_id)
+
+		tinyApi.connect_block(channel_slug, block_id, auth_token()).then((res) => {
+			console.log("connected", res)
+			refresh()
+		})
+	}
+
+	let refresh = () => {
+		tinyApi.get_channel(multislug(), auth_token()).then((res) => {
+			if (!res || !res.title || !res.contents) return
+			contents.set(res.contents)
+		})
+	}
+
+	eff_on(multislug, () => {
+		if (multislug()) refresh()
+	})
+
+	let keydown = (e) => {
+		if (e.key === "Enter") {
+			multislug.set(e.target.value)
+			e.target.blur()
+		}
+	}
+
+	let mouseenter = (e) => { active.set(true); console.log("enter") }
+	let mouseleave = (e) => { active.set(false) }
+
+	return html`
+		button.multi-player-toggle [onclick=${() => open.set(!open())}] -- ((mixer))
+		div [class=${_class} onmouseenter=${mouseenter} onmouseleave=${mouseleave}]
+			button.close [onclick=${() => open.set(false)}] -- ((close))
+			div 
+				input [placeholder=paste-slug onkeydown=${keydown}]
+
+			when ${mem(() => contents().length > 0)}
+			then ${() => html`
+				each of ${contents} as ${Block}
+		`}
+	`
+}
+
 const Channel = () => {
 	return html`
 		style -- ${css_string}
@@ -442,10 +533,19 @@ const Channel = () => {
 
 const Main = () => html`
 	style -- ${css_string}
-	when ${mem(() => channel_slug() === "")} then ${Home}
-	when ${mem(() => channel_slug() !== "")} then ${Channel}
-	
+	div -- ${nest}
 `
+
+const nest = () => {
+	return html`
+		div
+			div -- ${Mixer}
+			when ${mem(() => channel_slug() === "")} then ${Home}
+			when ${mem(() => channel_slug() !== "")} then ${Channel}
+
+`
+
+}
 
 render(Main, document.querySelector('#mother'))
 
@@ -503,6 +603,15 @@ window.onload = () => {
 			find_previous_and_play(PlayerControls.playing().id)
 		}
 
+		if (e.key === "p") {
+			paste_buffer ? paste_buffer() : console.log("no paste buffer")
+
+		}
+
+		if (e.key === "y") {
+			if (potential_buffer()) buffer.set(potential_buffer())
+			console.log("buffer", buffer())
+		}
 	})
 
 	document.body.addEventListener("keyup", (e) => {

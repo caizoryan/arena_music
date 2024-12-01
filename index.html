@@ -2,7 +2,7 @@
 <html>
 
 <head>
-	<title>Bootleg Are.na Playlist</title>
+	<title>Bootleg Player</title>
 	<link rel="stylesheet" href="https://code.jquery.com/ui/1.13.3/themes/smoothness/jquery-ui.css">
 </head>
 <style>
@@ -19,7 +19,7 @@
 	}
 
 	* {
-		font-family: 'Departure', monospace;
+		font-family: Arial Narrow, monospace;
 		color: var(--text);
 	}
 
@@ -27,6 +27,11 @@
 		display: none;
 	}
 
+
+	h3.title {
+		text-transform: uppercase;
+		letter-spacing: 1px;
+	}
 
 	.debug-hovered {
 		border: 2px solid red !important;
@@ -110,6 +115,39 @@
 
 	.side {
 		position: relative;
+		display: grid;
+		grid-template-columns: 1fr 1fr 1fr;
+	}
+
+	.settings {
+		position: fixed;
+		width: 30vw;
+		transition: all .2s ease-out;
+		padding: 1em;
+		border: 1px solid var(--light-primary);
+		z-index: 999;
+		background-color: var(--background);
+	}
+
+	.multi-player {
+		position: fixed;
+		width: 30vw;
+		transition: all .2s ease-out;
+		padding: 1em;
+		border: 1px solid var(--light-primary);
+		top: 1em;
+		right: 1em;
+
+		transition: all .2s ease-out;
+		background-color: var(--background);
+	}
+
+	div.close {
+		transform: translate3d(100vw, 0, 0);
+	}
+
+	.active {
+		box-shadow: 0 0 10px var(--light-primary);
 	}
 
 	.end {
@@ -134,6 +172,12 @@
 		padding: 1em;
 		font-size: .7em;
 		color: green;
+	}
+
+	.multi-player-toggle {
+		position: fixed;
+		top: 4em;
+		right: 1em;
 	}
 
 	.css-block {
@@ -256,19 +300,19 @@
 	.home {
 		position: fixed;
 		top: 15vh;
-
+		width: 100%;
 
 		display: grid;
 		padding: 2rem;
 		grid-gap: 3em;
-		grid-template-columns: 1fr 3fr;
-
+		grid-template-rows: 1fr 5fr;
 		height: 80vh;
 		overflow-y: hidden;
 	}
 
 	.intro {
 		height: 100%;
+		width: 100%;
 
 		overflow-y: scroll;
 		padding-bottom: 2em;
@@ -307,6 +351,7 @@
 		if ($) {
 			$(".editor").draggable();
 			$(".css-library").draggable();
+			$(".multi-player").draggable();
 		}
 	}, 1000);
 </script>
