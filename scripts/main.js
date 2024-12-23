@@ -36,7 +36,6 @@ const init = () => {
 		load_css(default_css)
 		let str = localStorage.getItem(channel_slug())
 		if (str) load_css(str)
-		console.log("loaded css")
 	});
 	page({ hashbang: true });
 };
@@ -91,7 +90,7 @@ let dispatchedRefresh = false
 
 
 // Dependent data
-let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase() === "cover" && block.class === "Image"))
+let cover = mem(() => contents_raw().find((block) => block.title.toLowerCase().includes("cover") && block.class === "Image"))
 let css_blocks = mem(() => contents_raw().filter((block) => {
 	let split = block.title.toLowerCase().split(".")
 	let end = split[split.length - 1]
@@ -120,15 +119,8 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	console.log("contents_raw", contents_raw())
 	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel")
-	// filtered = filtered.sort((a, b) => b.position - a.position)
 	channel.contents = filtered
-	channel.contents.forEach((block) => {
-		if (block.class === "Channel") {
-			console.log("channel", block)
-		}
-	})
 })
 
 // init
