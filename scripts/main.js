@@ -47,6 +47,7 @@ const init = () => {
 // ------------------------
 export const Config = {
 	auto_refresh: false,
+	enable_remote: true,
 	auto_refresh_at: .95,
 	default_property: "____",
 	default_value: "____"
@@ -474,6 +475,13 @@ const Block = (block) => {
 	`
 }
 
+function delete_block(id) {
+	console.log("aut", auth_token())
+	tinyApi.disconnect_block(channel_slug(), id, auth_token())
+}
+
+let executed_command_blocks = []
+
 
 const Player = () => {
 	let isPlaying = mem(() => PlayerControls.playing())
@@ -481,9 +489,43 @@ const Player = () => {
 
 	let hide = mem(() => PlayerControls.playing() ? "transform: translateY(0); opacity: 1;" : "transform: translateY(400%); opacity: 0;")
 
+	let check_command = (block) => {
+
+		if (executed_command_blocks.includes(block.id)) return
+		if (block.class === "Text") {
+			console.log("checking", block.content)
+			if (block.content.includes("#skip")) {
+				find_next_and_play(PlayerControls.playing().id)
+				executed_command_blocks.push(block.id)
+				delete_block(block.id)
+			}
+
+			if (block.content.includes("#pause")) {
+				PlayerControls.pause()
+				executed_command_blocks.push(block.id)
+				delete_block(block.id)
+			}
+		}
+	}
+
 	let loaded = mem(() => {
 		if (PlayerControls.percent() > Config.auto_refresh_at && dispatchedRefresh === false && Config.auto_refresh) {
 			refresh_contents(channel_slug())
+		}
+
+
+		if (Config.enable_remote) {
+			let v = Math.floor(PlayerControls.percent() * 100)
+			if (v % 10 === 0) {
+				tinyApi.get_channel(channel_slug(), auth_token()).then((res) => {
+					res.contents.forEach((block) => {
+						check_command(block)
+					})
+				})
+				// will check if there are any new text blocks in the channel
+				// if there are will check if there is a command in the text block
+				// if there is a command, will execute the command
+			}
 		}
 
 		return loaderString(PlayerControls.percent(), 35)

@@ -113,15 +113,14 @@ const move_connection = (cur_slug, new_slug, block_id) => {
 	});
 };
 
-const disconnect_block = (slug, id) => {
-	fetch(host + "channels/" + slug + "/blocks/" + id, {
+const disconnect_block = (slug, id, auth) => {
+	console.log("dis", auth)
+	return fetch(host + "channels/" + slug + "/blocks/" + id, {
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: "Bearer " + auth,
 		},
 		method: "DELETE",
-	}).then((res) => {
-		refresh_journal(slug);
 	});
 };
 
@@ -173,4 +172,5 @@ export let tinyApi = {
 	get_channel,
 	get_group_channels,
 	connect_block,
+	disconnect_block,
 }
