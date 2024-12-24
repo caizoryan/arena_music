@@ -376,6 +376,7 @@ let create_window = (block) => {
 	let w = document.createElement("div")
 	let _class = "window-" + block.id
 	w.classList.add(_class)
+	w.classList.add("window")
 
 	w.style = `
 			top: 50px;
@@ -517,12 +518,9 @@ const Player = () => {
 	let hide = mem(() => PlayerControls.playing() ? "transform: translateY(0); opacity: 1;" : "transform: translateY(400%); opacity: 0;")
 
 	let check_command = (block) => {
-
 		if (executed_command_blocks.includes(block.id)) return
 		if (block.class === "Text") {
-			console.log("checking", block.content)
 			if (block.content.includes("#skip") || block.content.includes("#next")) {
-
 				find_next_and_play(playing().id)
 				executed_command_blocks.push(block.id)
 				delete_block(block.id)
