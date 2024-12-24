@@ -480,6 +480,7 @@ function delete_block(id) {
 }
 
 let executed_command_blocks = []
+let last_check = Date.now()
 
 
 const Player = () => {
@@ -528,7 +529,12 @@ const Player = () => {
 
 		if (Config.enable_remote) {
 			let v = Math.floor(PlayerControls.percent() * 100)
-			if (v % 10 === 0) {
+			let now = Date.now()
+			let diff = now - last_check
+			console.log(diff)
+			if (diff > 10000) {
+				console.log("checking for commands")
+				last_check = now
 				tinyApi.get_channel(channel_slug(), auth_token()).then((res) => {
 					res.contents.forEach((block) => {
 						check_command(block)
