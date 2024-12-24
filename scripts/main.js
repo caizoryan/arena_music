@@ -5,6 +5,7 @@ import player from "./utilities/player.js"
 import page from './utilities/page.js';
 import { auth_token, Home } from './components/home.js';
 import { css_string, css, load_css } from './utilities/css.js';
+import { MD } from './utilities/md.js';
 
 
 // ------------------------
@@ -121,7 +122,7 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel" || block.class === "Image" || block.class === "Link")
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel" || block.class === "Image" || block.class === "Link" || block.class === "Text")
 	console.log("filtered", filtered)
 	channel.contents = filtered
 })
@@ -371,11 +372,11 @@ function create_block_player(block) {
 	}
 }
 
-let create_iframe = (url) => {
+let create_window = (block) => {
 	let w = document.createElement("div")
-	let uid = Math.random().toString(36).substring(7)
-	let id = "iframe-" + uid
-	w.classList.add(id)
+	let _class = "window-" + block.id
+	w.classList.add(_class)
+
 	w.style = `
 			top: 50px;
 			left: 50px;
@@ -388,12 +389,40 @@ let create_iframe = (url) => {
 	let remove_window = () => w.remove()
 	$(w).draggable()
 
-	render(() => html`
-			button.close-iframe [onclick=${remove_window}] -- ((close))
-			iframe [src=${url} style=width:100%;height:100% onclick=${remove_window}]
-			`, w)
+	if (block.class === "Attachment") {
+		render(attachment_window(block.attachment.url, remove_window), w)
+	}
+	else if (block.class === "Image") {
+		render(image_window(block.image.display.url, remove_window), w)
+	}
+	else if (block.class === "Text") {
+		render(text_window(block.content, remove_window), w)
+	}
+	else if (block.class === "Link") {
+		render(link_window(block.source.url, remove_window), w)
+	}
+
 	document.body.appendChild(w)
 }
+
+let attachment_window = (url, close) => () => html`
+	button.close-iframe [onclick=${close}] -- ((close))
+	iframe [src=${url} style=width:100%;height:100%]
+	`
+let image_window = (url, close) => () => html`
+	button.close-iframe [onclick=${close}] -- ((close))
+	img [src=${url} style=max-width:100%;max-height:100%]
+`
+
+let text_window = (content, close) => () => html`
+	button.close-iframe [onclick=${close}] -- ((close))
+	div [style=padding:1em] -- ${MD(content)}
+`
+let link_window = (url, close) => () => html`
+	button.close-iframe [onclick=${close}] -- ((close))
+	iframe [src=${url} style=width:100%;height:100%]
+`
+
 
 const Block = (block) => {
 	if (block.class === "Channel") {
@@ -421,25 +450,23 @@ const Block = (block) => {
 		potential_buffer.set({})
 	}
 	let onclick = () => {
-		if (block.class === "Attachment" && block.attachment.extension === "pdf") {
-			create_iframe(block.attachment.url)
-		}
+		if ((block.class === "Attachment" && block.attachment.extension === "pdf") ||
+			block.class === "Image" ||
+			block.class === "Link" ||
+			block.class === "Text"
+		) {
 
-		if (block.class === "Image") {
-			create_iframe(block.image.display.url)
-		}
+			create_window(block)
 
-		if (block.class === "Link") {
-			create_iframe(block.source.url)
-		}
-		if ("function" == typeof block.handle_toggle) block.handle_toggle()
+		} else if ("function" == typeof block.handle_toggle) block.handle_toggle()
 	}
 	// ------------------------
 	// fix this, this is a hack... when block is an image or something
 	// it wont assign the functions
 	if (!block.loading) {
-		if (block.class == "Image" || block.class == "Attachment" || block.class == "Link") {
+		if (block.class == "Image" || block.class == "Attachment" || block.class == "Link" || block.class == "Text") {
 			let _class = "block block-" + block.class
+			let title = block.title ? block.title : "untitled"
 			return html`
 					div [
 							onclick=${onclick}
@@ -450,7 +477,7 @@ const Block = (block) => {
 
 						img.thumb-image [src=${image}]
 						span.metadata
-							span.title -- ${" " + block?.title} `
+							span.title -- ${" " + title} `
 		}
 	}
 
