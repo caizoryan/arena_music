@@ -17,7 +17,8 @@ import { css_string, css, load_css } from './utilities/css.js';
 function getURL(item) {
 	switch (item.class) {
 		case 'Attachment':
-			return item.attachment.url
+			if (item.attachment.extension === "mp3") return item.attachment.url
+			else return false
 		case 'Media':
 			return item.source.url
 		default:
@@ -119,7 +120,8 @@ eff_on(css_blocks, () => {
 })
 
 eff_on(contents_raw, () => {
-	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel")
+	let filtered = contents_raw().filter((block) => block.class === "Media" || block.class === "Attachment" || block.class === "Channel" || block.class === "Image" || block.class === "Link")
+	console.log("filtered", filtered)
 	channel.contents = filtered
 })
 
@@ -187,7 +189,7 @@ function find_previous_and_play(id) {
 
 function find_next_and_play(id) {
 	let find = find_next(id)
-	if (!find.handle_play) {
+	if (!find.handle_play || "function" !== typeof find.handle_play) {
 		find_next_and_play(find.id)
 	} else { find.handle_play() }
 }
@@ -277,7 +279,9 @@ const Unplayable = () => html`
 function create_block_player(block) {
 	let url = getURL(block)
 	// TODO : should return unplayable in parent func not here
-	if (!url) return Unplayable
+	if (!url) {
+		return Unplayable
+	}
 
 	let d = "-"
 	let duration = sig(d)
@@ -366,6 +370,30 @@ function create_block_player(block) {
 	}
 }
 
+let create_iframe = (url) => {
+	let w = document.createElement("div")
+	let uid = Math.random().toString(36).substring(7)
+	let id = "iframe-" + uid
+	w.classList.add(id)
+	w.style = `
+			top: 50px;
+			left: 50px;
+			width: 40vw;
+			height: 70vh;
+			position: fixed;
+			background-color: var(--background);
+			border: var(--main-border);
+			z-index:9999`
+	let remove_window = () => w.remove()
+	$(w).draggable()
+
+	render(() => html`
+			button.close-iframe [onclick=${remove_window}] -- ((close))
+			iframe [src=${url} style=width:100%;height:100% onclick=${remove_window}]
+			`, w)
+	document.body.appendChild(w)
+}
+
 const Block = (block) => {
 	if (block.class === "Channel") {
 		let click = create_channel_click(block.slug)
@@ -384,24 +412,55 @@ const Block = (block) => {
 	// so they are globally accessible
 	// ------------------------
 	Object.assign(block, block_player)
-	// ------------------------
-	// fix this, this is a hack... when block is an image or something
-	// it wont assign the functions
-	if (!block.loading) return
 
-	let isLoading = mem(() => block.loading() === true)
-	let notLoading = mem(() => block.loading() === false)
-	let _class = mem(() => "block block-" + block.class + " " + (block.playing() ? "playing" : ""))
 	let onmouseenter = (e) => {
 		potential_buffer.set(block)
 	}
 	let onmouseleave = (e) => {
 		potential_buffer.set({})
 	}
+	let onclick = () => {
+		if (block.class === "Attachment" && block.attachment.extension === "pdf") {
+			create_iframe(block.attachment.url)
+		}
+
+		if (block.class === "Image") {
+			create_iframe(block.image.display.url)
+		}
+
+		if (block.class === "Link") {
+			create_iframe(block.source.url)
+		}
+		if ("function" == typeof block.handle_toggle) block.handle_toggle()
+	}
+	// ------------------------
+	// fix this, this is a hack... when block is an image or something
+	// it wont assign the functions
+	if (!block.loading) {
+		if (block.class == "Image" || block.class == "Attachment" || block.class == "Link") {
+			let _class = "block block-" + block.class
+			return html`
+					div [
+							onclick=${onclick}
+							class = ${_class}
+							id = ${"block-" + block.id}
+							onmouseenter=${onmouseenter}
+							onmouseleave=${onmouseleave} ]
+
+						img.thumb-image [src=${image}]
+						span.metadata
+							span.title -- ${" " + block?.title} `
+		}
+	}
+
+	let isLoading = mem(() => block.loading() === true)
+	let notLoading = mem(() => block.loading() === false)
+	let _class = mem(() => "block block-" + block.class + " " + (block.playing() ? "playing" : ""))
+
 
 	return html`
 	div [
-			onclick=${block.handle_toggle}
+			onclick=${onclick}
 			class = ${_class}
 			id = ${"block-" + block.id}
 			onmouseenter=${onmouseenter}

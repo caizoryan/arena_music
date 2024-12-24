@@ -27,6 +27,10 @@
 		display: none;
 	}
 
+	.close-iframe {
+		margin: .5em
+	}
+
 
 	h3.title {
 		text-transform: uppercase;
@@ -347,11 +351,17 @@
 <script src="https://code.jquery.com/ui/1.13.3/jquery-ui.js"></script>
 <script type='module' src="./scripts/main.js"></script>
 <script>
+	function make_draggable(selector) {
+		$(selector).draggable();
+	}
+
+
+	window.make_draggable = make_draggable;
+
 	setTimeout(() => {
 		if ($) {
-			$(".editor").draggable();
-			$(".css-library").draggable();
-			$(".multi-player").draggable();
+			make_draggable('.editor');
+			make_draggable('.css-library');
 		}
 	}, 1000);
 </script>
