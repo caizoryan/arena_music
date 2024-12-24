@@ -495,7 +495,8 @@ const Player = () => {
 		if (block.class === "Text") {
 			console.log("checking", block.content)
 			if (block.content.includes("#skip") || block.content.includes("#next")) {
-				find_next_and_play(PlayerControls.playing().id)
+
+				find_next_and_play(playing().id)
 				executed_command_blocks.push(block.id)
 				delete_block(block.id)
 			}
@@ -508,7 +509,7 @@ const Player = () => {
 			}
 
 			if (block.content.includes("#prev")) {
-				find_previous_and_play(PlayerControls.playing().id)
+				find_previous_and_play(playing().id)
 				executed_command_blocks.push(block.id)
 				delete_block(block.id)
 			}
