@@ -114,7 +114,6 @@ const move_connection = (cur_slug, new_slug, block_id) => {
 };
 
 const disconnect_block = (slug, id, auth) => {
-	console.log("dis", auth)
 	return fetch(host + "channels/" + slug + "/blocks/" + id, {
 		headers: {
 			"Content-Type": "application/json",

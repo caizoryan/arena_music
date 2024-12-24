@@ -476,7 +476,6 @@ const Block = (block) => {
 }
 
 function delete_block(id) {
-	console.log("aut", auth_token())
 	tinyApi.disconnect_block(channel_slug(), id, auth_token())
 }
 
@@ -494,14 +493,27 @@ const Player = () => {
 		if (executed_command_blocks.includes(block.id)) return
 		if (block.class === "Text") {
 			console.log("checking", block.content)
-			if (block.content.includes("#skip")) {
+			if (block.content.includes("#skip") || block.content.includes("#next")) {
 				find_next_and_play(PlayerControls.playing().id)
 				executed_command_blocks.push(block.id)
 				delete_block(block.id)
 			}
 
+
 			if (block.content.includes("#pause")) {
 				PlayerControls.pause()
+				executed_command_blocks.push(block.id)
+				delete_block(block.id)
+			}
+
+			if (block.content.includes("#prev")) {
+				find_previous_and_play(PlayerControls.playing().id)
+				executed_command_blocks.push(block.id)
+				delete_block(block.id)
+			}
+
+			if (block.content.includes("#play")) {
+				PlayerControls.play()
 				executed_command_blocks.push(block.id)
 				delete_block(block.id)
 			}
