@@ -6,6 +6,7 @@ import page from './utilities/page.js';
 import { auth_token, Home } from './components/home.js';
 import { css_string, css, load_css } from './utilities/css.js';
 import { MD } from './utilities/md.js';
+import { SearchBar } from './components/search.js';
 
 
 // ------------------------
@@ -595,6 +596,8 @@ const Player = () => {
 
 }
 
+let multislug = sig("")
+
 const Mixer = () => {
 	let open = sig(false)
 	let active = sig(false)
@@ -605,7 +608,6 @@ const Mixer = () => {
 		return ret
 	})
 
-	let multislug = sig("")
 	let contents = sig([])
 
 	set_mixer_slug = (slug) => { multislug.set(slug); open.set(true) }
@@ -634,12 +636,6 @@ const Mixer = () => {
 		if (multislug()) refresh()
 	})
 
-	let keydown = (e) => {
-		if (e.key === "Enter") {
-			multislug.set(e.target.value)
-			e.target.blur()
-		}
-	}
 
 	let mouseenter = (e) => { active.set(true); console.log("enter") }
 	let mouseleave = (e) => { active.set(false) }
@@ -648,8 +644,7 @@ const Mixer = () => {
 		button.multi-player-toggle [onclick=${() => open.set(!open())}] -- ((mixer))
 		div [class=${_class} onmouseenter=${mouseenter} onmouseleave=${mouseleave}]
 			button.close [onclick=${() => open.set(false)}] -- ((close))
-			div 
-				input [placeholder=paste-slug onkeydown=${keydown}]
+			div -- ${mixerSearch}
 
 			when ${mem(() => contents().length > 0)}
 			then ${() => html`
@@ -658,9 +653,85 @@ const Mixer = () => {
 	`
 }
 
+
+
+export function mixerSearch() {
+	async function search(query) {
+		let res = await fetch(`https://api.are.na/v2/search/channels?q=${query}&per=20`)
+		return await res.json()
+	}
+
+	const try_parse_channel = (str) => {
+		if (str.includes("https://www.are.na/")) {
+			let slug = str.split("/")
+			slug = slug[slug.length - 1]
+			return slug
+		}
+	}
+
+	let results = sig([])
+
+	const onInput = (e) => {
+		let query = e.target.value
+		if (query === "") return results.set([])
+		if (query.includes("https://www.are.na/")) {
+			let slug = try_parse_channel(query)
+			if (slug) {
+				results.set([])
+				return set_mixer_slug(slug)
+			}
+		}
+
+		search(query).then((res) => {
+			let channels = res.channels
+			if (channels) results.set(channels)
+		})
+	}
+
+
+	const onKeydown = (e) => {
+		if (e.key === "Escape") open.set(false)
+		if (e.key === "Enter") page("/" + results()[0].slug)
+	}
+
+	let placeholder = "paste channel link or search channel"
+
+	let result = (channel) => {
+		return html`
+			div
+				button [onclick=${() => { set_mixer_slug(channel.slug); results.set([]) }}] -- ${channel.title}`
+	}
+
+	return html`
+			input.search [ oninput=${onInput} onkeydown=${onKeydown} placeholder=${placeholder} ]
+			.search-results
+				each of ${results} as ${result}
+`
+}
+
+let command_open = sig(false)
+
+const open_command = () => {
+	command_open.set(true)
+}
+
+const CommandBar = () => {
+	let style = mem(() => `
+		display: ${command_open() ? "block" : "none"};
+		position: fixed;
+		left: 20vw;
+		top: 20vh;
+		width: 60vw;
+		height: 10vh;
+		background-color: var(--background);
+`)
+	return html`div [style=${style}] -- ${() => SearchBar(command_open)}`
+}
+
 const Channel = () => {
 	return html`
 		style -- ${css_string}
+		div -- ${CommandBar}
 		div -- ${Player}
 		div -- ${Editor}
 		h1#channel-header -- ${channel_title}
@@ -728,6 +799,15 @@ window.onload = () => {
 			if (e.target !== document.body) return
 			e.preventDefault()
 			PlayerControls.playing() ? PlayerControls.pause() : PlayerControls.play()
+		}
+
+		if (e.key === "k" && e.metaKey) {
+			e.preventDefault()
+			open_command()
+			setTimeout(() => {
+				console.log("focus", document.querySelector("input.search"))
+				document.querySelector("input.search").focus()
+			}, 200)
 		}
 
 		if (e.key === "N") {

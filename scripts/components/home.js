@@ -142,7 +142,6 @@ export const Home = () => {
 	return html`
 		.settings [class=${settings_class}] -- ${settings}
 		.welcome
-
 			.side
 				div -- ${() => SearchBar(search_open)}
 			h1 -- Bootleg Are.na Player 
