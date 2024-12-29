@@ -722,7 +722,6 @@ const CommandBar = () => {
 		left: 20vw;
 		top: 20vh;
 		width: 60vw;
-		height: 10vh;
 		background-color: var(--background);
 `)
 	return html`div [style=${style}] -- ${() => SearchBar(command_open)}`
@@ -807,7 +806,7 @@ window.onload = () => {
 			setTimeout(() => {
 				console.log("focus", document.querySelector("input.search"))
 				document.querySelector("input.search").focus()
-			}, 200)
+			}, 500)
 		}
 
 		if (e.key === "N") {

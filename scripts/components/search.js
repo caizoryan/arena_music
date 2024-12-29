@@ -1,8 +1,14 @@
 import { eff_on, html, mem, sig } from "../libraries/solid_monke/solid_monke.js"
 import page from "../utilities/page.js"
+import { auth_token } from "./home.js"
 
 async function search(query) {
-	let res = await fetch(`https://api.are.na/v2/search/channels?q=${query}&per=20`)
+	let res = await fetch(`https://api.are.na/v2/search/channels?q=${query}&per=20`, {
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: "Bearer " + auth_token()
+		}
+	})
 	return await res.json()
 }
 
@@ -29,6 +35,12 @@ export function SearchBar(open) {
 			if (channels) results.set(channels)
 		})
 	}
+
+	eff_on(open, () => {
+		if (open()) {
+			setTimeout(() => document.querySelector(".search").focus(), 100)
+		}
+	})
 
 	const cursor = sig(0)
 
