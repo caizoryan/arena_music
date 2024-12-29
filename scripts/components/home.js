@@ -142,14 +142,15 @@ export const Home = () => {
 	return html`
 		.settings [class=${settings_class}] -- ${settings}
 		.welcome
+
+			.side
+				div -- ${() => SearchBar(search_open)}
 			h1 -- Bootleg Are.na Player 
 			a [href=https://github.com/caizoryan/arena_music/archive/refs/heads/main.zip]
 				button -- [ Download Source ]
 			button [onclick=${() => settings_open.set(!settings_open())}] -- [ Settings ]
 
 		.home
-			.side
-				div -- ${() => SearchBar(search_open)}
 
 			.intro 
 				when ${mem(() => group_channels_raw().length == 0)}
@@ -165,7 +166,7 @@ export const Home = () => {
 }
 
 const ChannelContainer = ([group, channels]) => {
-	let open = sig(false)
+	let open = sig(true)
 	return html`
 		div.group [onclick=${() => open.set(!open())}]
 			h3.title -- ${group}

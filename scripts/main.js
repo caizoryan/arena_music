@@ -770,11 +770,11 @@ let default_css = `
 		--primary: #111;
 		--secondary: #eee;
 
-		--light-primary: #444;
-		--medium-primary: #666;
+		--light-primary: #ff4;
+		--medium-primary: #f66;
 
-		--light-background: #aaa;
-		--medium-background: #ccc;
+		--light-background: #0af;
+		--medium-background: #0af;
 		--accent: #f00;
 
 		/* -------------------- */
@@ -788,7 +788,7 @@ let default_css = `
 	}
 
 	* {
-		font-family: 'Departure', monospace;
+		font-family: "Roboto Mono", monospace;
 		color: var(--text);
 	}
 
