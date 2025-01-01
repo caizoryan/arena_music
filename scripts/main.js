@@ -8,8 +8,19 @@ import { css_string, css, load_css } from './utilities/css.js';
 import { MD } from './utilities/md.js';
 import { SearchBar } from './components/search.js';
 
-async function get_connections(id, auth) {
+async function get_block_connections(id, auth) {
 	return await fetch(`https://api.are.na/v2/blocks/${id}/channels?per=50&sort=position&direction=desc`, {
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: "Bearer " + auth,
+		},
+		method: "GET",
+	})
+		.then((res) => res.json())
+}
+
+async function get_channel_connections(slug, auth) {
+	return await fetch(`https://api.are.na/v2/channels/${slug}/connections`, {
 		headers: {
 			"Content-Type": "application/json",
 			Authorization: "Bearer " + auth,
@@ -148,6 +159,8 @@ eff_on(channel_slug, () => {
 	refresh_contents(channel_slug())
 })
 
+let artist_channel = sig({})
+
 function refresh_contents(slug) {
 	tinyApi.get_channel(slug, auth_token()).then((res) => {
 		// if playing, preserve the playing
@@ -156,6 +169,21 @@ function refresh_contents(slug) {
 		if (!res || !res.title || !res.contents) return
 		channel_title.set(res.title)
 		contents_raw.set(res.contents)
+
+		if (channel_title().toLowerCase().includes("album /")) {
+			get_channel_connections(slug, auth_token()).then((res) => {
+				res?.channels.forEach((channel) => {
+					console.log("channel", channel.title)
+					let artist_keys = ["(artist)", "(band)"]
+					let is_artist = artist_keys.reduce((acc, key) => acc || channel.title.toLowerCase().includes(key), false)
+					console.log("is_artist", is_artist)
+					if (is_artist) {
+						console.log("artist", channel.title)
+						artist_channel.set(channel)
+					}
+				})
+			})
+		}
 
 	})
 
@@ -445,23 +473,21 @@ const Block = (block) => {
 	}
 
 	let connections = sig([])
+	let album_channel = mem(() => connections().find((connection) => {
+		console.log("connection", connection.title)
+		return connection.title.toLowerCase().includes("album /")
+	}))
 
-	eff_on(connections, () => {
-		// for each connection, get the channel
-		// filter for channels that contain "Album /" in their title
-		// and see if it has a cover image
-		for (let connection of connections()) {
-			if (connection.title.includes("Album /")) {
-				tinyApi.get_channel(connection.slug, auth_token()).then((res) => {
-					if (!res || !res.title || !res.contents) return
-					let cover = res.contents.find((block) => block.title.toLowerCase().includes("cover") && block.class === "Image")
-					if (cover) {
-						block.image = cover.image
-					}
-				})
-			}
+	let artist_channel = sig({})
+
+	eff_on(album_channel, () => {
+		if (album_channel()) {
+			tinyApi.get_channel(album_channel().slug, auth_token()).then((res) => {
+				let cover = res.contents.find((block) => block.title.toLowerCase().includes("cover"))
+				console.log("channel", res)
+				block.image = cover.image
+			})
 		}
-
 	})
 
 	if (!channel_title().toLowerCase().includes("album /")) {
@@ -470,9 +496,11 @@ const Block = (block) => {
 getting connections
 !!!!!!!!!!!!!!!!!!!!
 `)
-		get_connections(block.id, auth_token()).then((res) => {
+		get_block_connections(block.id, auth_token()).then((res) => {
 			connections.set(res.channels)
 		})
+	} else {
+		artist_channel.set(channel)
 	}
 
 	let image = mem(() => block?.image?.thumb.url ? block.image.thumb.url : cover_image())
@@ -774,6 +802,7 @@ const Channel = () => {
 		div -- ${Player}
 		div -- ${Editor}
 		h1#channel-header -- ${channel_title}
+		a#artist-header [onclick=${() => page("/" + artist_channel().slug)}] -- ${artist_channel().title?.split(" / ")[1]}
 		.track-list
 			each of ${_ => channel.contents} as ${Block}
 `}
@@ -948,6 +977,11 @@ let default_css = `
 		background-color: var(--text);
 		color: var(--background);
 		animation: hover 1s infinite;
-
 	}
+
+.track-list {
+margin-top: 2em;
+}
+
+
 `
