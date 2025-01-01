@@ -8,6 +8,17 @@ import { css_string, css, load_css } from './utilities/css.js';
 import { MD } from './utilities/md.js';
 import { SearchBar } from './components/search.js';
 
+async function get_connections(id, auth) {
+	return await fetch(`https://api.are.na/v2/blocks/${id}/channels?per=50&sort=position&direction=desc`, {
+		headers: {
+			"Content-Type": "application/json",
+			Authorization: "Bearer " + auth,
+		},
+		method: "GET",
+	})
+		.then((res) => res.json())
+}
+
 
 // ------------------------
 // BOOTLEG NOTICE
@@ -427,15 +438,44 @@ let link_window = (url, close) => () => html`
 
 
 const Block = (block) => {
+	console.log("block", block)
 	if (block.class === "Channel") {
 		let click = create_channel_click(block.slug)
 		return html`button.channel [onclick=${click}] -- ${block.title}`
 	}
 
-	let image = block?.image?.thumb.url
-	if (!image) {
-		image = cover_image()
+	let connections = sig([])
+
+	eff_on(connections, () => {
+		// for each connection, get the channel
+		// filter for channels that contain "Album /" in their title
+		// and see if it has a cover image
+		for (let connection of connections()) {
+			if (connection.title.includes("Album /")) {
+				tinyApi.get_channel(connection.slug, auth_token()).then((res) => {
+					if (!res || !res.title || !res.contents) return
+					let cover = res.contents.find((block) => block.title.toLowerCase().includes("cover") && block.class === "Image")
+					if (cover) {
+						block.image = cover.image
+					}
+				})
+			}
+		}
+
+	})
+
+	if (!channel_title().toLowerCase().includes("album /")) {
+		console.log(`
+!!!!!!!!!!!!!!!!!!!!
+getting connections
+!!!!!!!!!!!!!!!!!!!!
+`)
+		get_connections(block.id, auth_token()).then((res) => {
+			connections.set(res.channels)
+		})
 	}
+
+	let image = mem(() => block?.image?.thumb.url ? block.image.thumb.url : cover_image())
 
 	let block_player = create_block_player(block)
 
