@@ -849,11 +849,11 @@ let default_css = `
 		--primary: #111;
 		--secondary: #eee;
 
-		--light-primary: #ff4;
-		--medium-primary: #f66;
+		--light-primary: #fefefe;
+		--medium-primary: #ddd;
 
-		--light-background: #0af;
-		--medium-background: #0af;
+		--light-background: #fff;
+		--medium-background: #f5f5f5;
 		--accent: #f00;
 
 		/* -------------------- */
