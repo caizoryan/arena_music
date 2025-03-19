@@ -71,7 +71,7 @@ const init = () => {
 // ------------------------
 export const Config = {
 	auto_refresh: false,
-	enable_remote: true,
+	enable_remote: false,
 	auto_refresh_at: .95,
 	default_property: "____",
 	default_value: "____"
@@ -623,6 +623,7 @@ const Player = () => {
 
 
 		if (Config.enable_remote) {
+			console.log(Config.enable_remote)
 			let v = Math.floor(PlayerControls.percent() * 100)
 			let now = Date.now()
 			let diff = now - last_check
